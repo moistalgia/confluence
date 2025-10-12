@@ -1176,7 +1176,27 @@ class EnhancedMultiTimeframeAnalyzer:
                 recent_low = df['low'].tail(20).min()
                 indicators['resistance_level'] = recent_high
                 indicators['support_level'] = recent_low
-                indicators['position_in_range'] = (current_price - recent_low) / (recent_high - recent_low) if recent_high != recent_low else 0.5
+                
+                # Fixed position calculation to handle outside range properly
+                if recent_high != recent_low:
+                    position_ratio = (current_price - recent_low) / (recent_high - recent_low)
+                    if position_ratio > 1.0:  # Above range
+                        indicators['position_in_range'] = 1.0  # Cap at 100%
+                        indicators['range_status'] = f'ABOVE RANGE by {((current_price - recent_high) / recent_high * 100):.1f}%'
+                    elif position_ratio < 0.0:  # Below range  
+                        indicators['position_in_range'] = 0.0  # Cap at 0%
+                        indicators['range_status'] = f'BELOW RANGE by {((recent_low - current_price) / current_price * 100):.1f}%'
+                    else:  # Within range
+                        indicators['position_in_range'] = position_ratio
+                        if position_ratio > 0.7:
+                            indicators['range_status'] = 'UPPER'
+                        elif position_ratio < 0.3:
+                            indicators['range_status'] = 'LOWER'
+                        else:
+                            indicators['range_status'] = 'MIDDLE'
+                else:
+                    indicators['position_in_range'] = 0.5
+                    indicators['range_status'] = 'NEUTRAL'
             
             # Trend strength
             if indicators['sma_50'] and indicators['sma_200']:

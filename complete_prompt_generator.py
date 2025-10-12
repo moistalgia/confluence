@@ -26,6 +26,15 @@ def format_price(price):
     else:
         return f"${price:,.2f}"
 
+def format_distance_percent(percent_value, decimals=1):
+    """Format distance percentages clearly without confusing negative signs"""
+    if percent_value > 0:
+        return f"+{percent_value:.{decimals}f}% above"
+    elif percent_value < 0:
+        return f"{abs(percent_value):.{decimals}f}% below" 
+    else:
+        return "at level"
+
 def generate_complete_ultimate_prompt(symbol, analysis):
     """Generate COMPLETE prompt with ALL analysis data included"""
     
@@ -187,7 +196,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
 
         prompt += f"""
 
-### Multi-Timeframe Analysis
+### Multi-Timeframe Analysis (Current: {format_price(current_price)})
 - **Confluence Score**: {confluence_score}/100
 
 **Timeframe Breakdown**:"""
@@ -326,18 +335,18 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 if sma20 > 0 and current_price_ind > 0:
                     sma20_dist = ((current_price_ind - sma20) / sma20) * 100
                     prompt += f"""
-  - **SMA20**: {format_price(sma20)} (price {sma20_dist:+.1f}% {'above' if sma20_dist > 0 else 'below'})"""
+  - **SMA20**: {format_price(sma20)} (price {format_distance_percent(sma20_dist)})"""
                 
                 if sma50 > 0 and current_price_ind > 0:
                     sma50_dist = ((current_price_ind - sma50) / sma50) * 100
                     prompt += f"""
-  - **SMA50**: {format_price(sma50)} (price {sma50_dist:+.1f}% {'above' if sma50_dist > 0 else 'below'})"""
+  - **SMA50**: {format_price(sma50)} (price {format_distance_percent(sma50_dist)})"""
                 
                 if sma200 > 0 and current_price_ind > 0:
                     sma200_dist = ((current_price_ind - sma200) / sma200) * 100
                     bull_bear = 'BULL MARKET' if sma200_dist > 0 else 'BEAR MARKET'
                     prompt += f"""
-  - **SMA200**: {format_price(sma200)} (price {sma200_dist:+.1f}% {'above' if sma200_dist > 0 else 'below'}) ← {bull_bear}"""
+  - **SMA200**: {format_price(sma200)} (price {format_distance_percent(sma200_dist)}) ← {bull_bear}"""
                 
                 # ENHANCED Bollinger Bands analysis - ALL TIMEFRAMES
                 bb_upper = indicators.get('bb_upper', 0)
@@ -380,7 +389,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     # Distance analysis  
                     distance_analysis = ""
                     if distance_to_upper != 0 and distance_to_lower != 0:
-                        distance_analysis = f" | To Upper: {distance_to_upper:+.2f}% | To Lower: {distance_to_lower:+.2f}%"
+                        distance_analysis = f" | To Upper: {format_distance_percent(distance_to_upper, 2)} | To Lower: {format_distance_percent(abs(distance_to_lower), 2)}"
                     
                     prompt += f"""
   - **Bollinger Bands**: Upper: {format_price(bb_upper)} | Middle: {format_price(bb_middle)} | Lower: {format_price(bb_lower)}
@@ -403,7 +412,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     long_term_status = "Strong profit" if vwap_distance_percent > 20 else "Moderate profit" if vwap_distance_percent > 0 else "Underwater"
                     
                     prompt += f"""
-  - **Long-term VWAP**: {format_price(vwap)} ({long_term_status}: {vwap_distance_percent:+.2f}% from institutional avg cost)
+  - **Long-term VWAP**: {format_price(vwap)} ({long_term_status}: {format_distance_percent(vwap_distance_percent, 2)} institutional avg cost)
   - **Signal**: {vwap_signal} | Position: {vwap_band_position}"""
                     
                     # Rolling VWAP analysis (more relevant for trading)
@@ -415,7 +424,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     
                     if vwap_50 > 0:
                         prompt += f"""
-  - **50-Period VWAP**: {format_price(vwap_50)} ({vwap_50_distance_percent:+.2f}%)"""
+  - **50-Period VWAP**: {format_price(vwap_50)} ({format_distance_percent(vwap_50_distance_percent, 2)})"""
                     
                     # VWAP Bands Analysis
                     if vwap_upper_1 > 0 and vwap_lower_1 > 0:
@@ -453,7 +462,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     balance_indicator = '⚖️ BALANCED' if market_balance == 'BALANCED' else '⬆️ UPPER HEAVY' if market_balance == 'UPPER_HEAVY' else '⬇️ LOWER HEAVY'
                     
                     prompt += f"""
-  - **Volume Profile**: POC: {format_price(poc_price)} ({poc_distance:+.1f}%) | VA: {va_position}
+  - **Volume Profile**: POC: {format_price(poc_price)} ({format_distance_percent(poc_distance)}) | VA: {va_position}
   - **Value Area**: {format_price(va_low)} - {format_price(va_high)} | Signal: {va_signal}
   - **Distribution**: {volume_distribution} | HVN Levels: {hvn_count} | Balance: {balance_indicator}"""
                 
@@ -492,15 +501,21 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 
                 # Add detailed swing level analysis if available
                 if nearest_swing_high > 0 and nearest_swing_low > 0:
-                    swing_range = nearest_swing_high - nearest_swing_low
-                    current_position_in_range = 0
-                    if current_price_ind > 0 and swing_range > 0:
-                        current_position_in_range = ((current_price_ind - nearest_swing_low) / swing_range) * 100
+                    # Use new range_status and position_in_range from enhanced analyzer
+                    range_status = indicators.get('range_status', 'NEUTRAL')
+                    position_in_range = indicators.get('position_in_range', 0.5)
                     
-                    range_position = "UPPER" if current_position_in_range > 70 else "LOWER" if current_position_in_range < 30 else "MIDDLE"
+                    # Convert position to percentage for display
+                    position_percent = position_in_range * 100
+                    
+                    # Display either exact percentage or range status message
+                    if range_status.startswith(('ABOVE RANGE', 'BELOW RANGE')):
+                        position_display = range_status
+                    else:
+                        position_display = f"{range_status} ({position_percent:.1f}%)"
                     
                     prompt += f"""
-  - **Swing Range**: {format_price(nearest_swing_low)} - {format_price(nearest_swing_high)} | Position: {range_position} ({current_position_in_range:.1f}%)"""
+  - **Swing Range**: {format_price(nearest_swing_low)} - {format_price(nearest_swing_high)} | Position: {position_display}"""
                 
                 # Momentum Divergence Analysis
                 divergence_signal = indicators.get('divergence_signal', 'UNKNOWN')
@@ -721,7 +736,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
             if confluence_zones:
                 prompt += """
 
-### 🎯 SUPPORT/RESISTANCE CONFLUENCE ZONES (Ranked by Strength)
+### 🎯 SUPPORT/RESISTANCE CONFLUENCE ZONES (Current: {format_price(current_price)} | Ranked by Strength)
 
 **Major Confluence Levels** (Multiple timeframe confirmation):"""
                 
@@ -845,7 +860,7 @@ Sources: {', '.join(zone['sources'][:3])}{"..." if len(zone['sources']) > 3 else
             
             prompt += f"""
 
-### 📐 FIBONACCI RETRACEMENT ANALYSIS (From {source_timeframe} Swing)
+### 📐 FIBONACCI RETRACEMENT ANALYSIS (Current: {format_price(current_price)} | From {source_timeframe} Swing)
 
 **Recent Swing**: {format_price(swing_low)} → {format_price(swing_high)} (Range: {format_price(fib_range)})
 **Current Price**: {format_price(current_price)}
@@ -935,7 +950,7 @@ Sources: {', '.join(zone['sources'][:3])}{"..." if len(zone['sources']) > 3 else
         
         prompt += f"""
 
-### Volume Profile Analysis (COMPLETE INSTITUTIONAL DATA)
+### Volume Profile Analysis (Current: {format_price(current_price)} | COMPLETE INSTITUTIONAL DATA)
 
 **Point of Control (POC) - Fair Value**:
 - **Price**: {format_price(vp.get('poc', {}).get('price', 0))}
@@ -984,7 +999,7 @@ Sources: {', '.join(zone['sources'][:3])}{"..." if len(zone['sources']) > 3 else
     if signals:
         prompt += f"""
 
-### Enhanced Trading Signals (COMPLETE)
+### Enhanced Trading Signals (Current: {format_price(current_price)} | COMPLETE)
 - **Primary Bias**: {signals.get('primary_bias', 'NEUTRAL')}
 - **Signal Confidence**: {signals.get('confidence', 'UNKNOWN')}"""
         
@@ -1004,7 +1019,7 @@ Sources: {', '.join(zone['sources'][:3])}{"..." if len(zone['sources']) > 3 else
     if ultimate_score:
         prompt += f"""
 
-### Ultimate Score Breakdown (COMPLETE)
+### Ultimate Score Breakdown (Current: {format_price(current_price)} | COMPLETE)
 - **Composite Score**: {ultimate_score.get('composite_score', 0)}/100
 - **Confidence Level**: {ultimate_score.get('confidence_level', 'UNKNOWN')}
 
@@ -1037,7 +1052,7 @@ Sources: {', '.join(zone['sources'][:3])}{"..." if len(zone['sources']) > 3 else
         
         prompt += f"""
 
-### Dollar Cost Averaging (DCA) Strategy Analysis
+### Dollar Cost Averaging (DCA) Strategy Analysis (Current: {format_price(current_price)})
 - **DCA Score**: {dca_score}/15 ({recommendation})
 - **Recommended Frequency**: {frequency}
 - **Position Size**: {position_size} of portfolio per entry  
@@ -1095,6 +1110,83 @@ As a **Senior Institutional Trader** with access to this COMPLETE dataset (100% 
 - Volume confirmation signals to monitor
 - Timeframe-specific exit triggers
 - Risk management checkpoints
+
+## EXECUTIVE BRIEF REQUIREMENT
+**MANDATORY**: Begin your analysis with a concise 30-second executive summary covering:
+1. **Current Trend**: Primary direction and strength (bullish/bearish/ranging + confidence)
+2. **Key Levels**: Most critical support/resistance for immediate decisions
+3. **Trading Bias**: Clear directional bias with primary trade setup (long/short/neutral)
+4. **Risk Assessment**: Primary risk level and key invalidation points
+5. **Time Horizon**: Recommended holding period and strategy type (scalp/swing/position)
+
+This executive brief must be actionable for immediate trading decisions and address the most critical question: "What should I do right now with this asset?"
+
+## MULTI-HORIZON STRATEGY REQUIREMENTS
+**MANDATORY**: Provide distinct trading strategies for each time horizon with specific parameters:
+
+**1. SCALPING STRATEGY (1-5m timeframes):**
+- Entry zones with 0.1-0.5% precision
+- Stop loss levels (typically 0.2-1% max)
+- Profit targets in 15-60 minute windows
+- Volume confirmation requirements
+- Maximum position size recommendations
+
+**2. SWING STRATEGY (4h-1d timeframes):**
+- Multi-day entry accumulation zones
+- Stop losses based on daily support/resistance breaks
+- Profit targets spanning 3-14 day periods
+- Confluence-based entry validation
+- Risk-adjusted position sizing
+
+**3. POSITION STRATEGY (1d+ timeframes):**
+- Weekly/monthly accumulation strategies
+- Major trend-based stop losses (weekly closes)
+- Long-term profit targets (months to years)
+- Fundamental catalyst integration
+- DCA implementation guidelines
+
+Each strategy must include specific entry criteria, risk parameters, and expected holding periods.
+
+## SCENARIO PROBABILITY MATRIX REQUIREMENT
+**MANDATORY**: Provide probability-weighted scenarios with specific outcomes:
+
+**Format Example:**
+- **PRIMARY SCENARIO (60% probability)**: Range continuation between $X.XX - $Y.YY
+  - Target levels: $A.AA (3-5 days), $B.BB (7-10 days)
+  - Invalidation: Break below $Z.ZZ or above $W.WW
+  
+- **BULLISH SCENARIO (25% probability)**: Upside breakout above $Y.YY
+  - Target levels: $C.CC (immediate), $D.DD (extended)
+  - Catalyst required: Volume >150% average, sustained momentum
+  
+- **BEARISH SCENARIO (15% probability)**: Downside break below $X.XX
+  - Target levels: $E.EE (support retest), $F.FF (extended decline)
+  - Risk factors: Macro deterioration, sector weakness
+
+Each scenario must include specific price targets, probability percentages, timeframes, and invalidation criteria.
+
+## EXECUTION-READY TRADE SETUPS REQUIREMENT
+**MANDATORY**: Provide specific, actionable trade setups ready for immediate execution:
+
+**LONG SETUP (if applicable):**
+- Entry Zone: $X.XX - $Y.YY (specific price range)
+- Stop Loss: $Z.ZZ (exact level with rationale)
+- Target 1: $A.AA (R:R ratio, timeframe)
+- Target 2: $B.BB (extended target)
+- Position Size: X% of account (based on volatility/stop distance)
+- Volume Confirmation: Minimum threshold for entry validation
+- Invalidation: Specific price/pattern that cancels setup
+
+**SHORT SETUP (if applicable):**
+- Entry Zone: $X.XX - $Y.YY (specific price range)
+- Stop Loss: $Z.ZZ (exact level with rationale)
+- Target 1: $A.AA (R:R ratio, timeframe) 
+- Target 2: $B.BB (extended target)
+- Position Size: X% of account (based on volatility/stop distance)
+- Volume Confirmation: Minimum threshold for entry validation
+- Invalidation: Specific price/pattern that cancels setup
+
+Replace generic "support/resistance" concepts with precise entry/exit levels and risk-reward calculations.
 
 ## PRECISION REQUIREMENTS
 **CRITICAL**: When referencing specific price levels in your analysis, maintain the precision provided in the data:

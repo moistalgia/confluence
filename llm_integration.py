@@ -35,6 +35,15 @@ def format_price(price):
     else:
         return f"${price:,.2f}"
 
+def format_distance_percent(percent_value, decimals=1):
+    """Format distance percentages clearly without confusing negative signs"""
+    if percent_value > 0:
+        return f"+{percent_value:.{decimals}f}% above"
+    elif percent_value < 0:
+        return f"{abs(percent_value):.{decimals}f}% below" 
+    else:
+        return "at level"
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -632,7 +641,7 @@ Provide actionable, institutional-grade analysis with specific price levels and 
                     <li><strong>Primary Bias:</strong> {primary_bias}</li>
                     <li><strong>Confidence Level:</strong> {confidence}</li>
                     <li><strong>Current Position vs Value Area:</strong> {"Above" if current_price > va_high else "Below" if current_price < va_low else "Inside"}</li>
-                    <li><strong>Distance from POC:</strong> {((current_price - poc_price) / poc_price * 100):+.2f}%</li>
+                    <li><strong>Distance from POC:</strong> {format_distance_percent((current_price - poc_price) / poc_price * 100, 2)}</li>
                 </ul>
             </div>
         </div>
@@ -707,7 +716,7 @@ Provide actionable, institutional-grade analysis with specific price levels and 
 - **Primary Bias:** {primary_bias}
 - **Confidence Level:** {confidence}
 - **Current Position vs Value Area:** {"Above" if current_price > va_high else "Below" if current_price < va_low else "Inside"}
-- **Distance from POC:** {((current_price - poc_price) / poc_price * 100):+.2f}%
+- **Distance from POC:** {format_distance_percent((current_price - poc_price) / poc_price * 100, 2)}
 
 ---
 
