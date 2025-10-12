@@ -8,6 +8,24 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+def format_price(price):
+    """Format price with appropriate precision based on value"""
+    if price == 0:
+        return "$0.00"
+    
+    # For very small prices (< $0.01), use 6-8 decimal places
+    if price < 0.01:
+        return f"${price:.8f}"
+    # For small prices ($0.01 - $1), use 4-6 decimal places  
+    elif price < 1:
+        return f"${price:.6f}"
+    # For mid prices ($1 - $100), use 4 decimal places
+    elif price < 100:
+        return f"${price:.4f}"
+    # For higher prices ($100+), use 2 decimal places with comma separation
+    else:
+        return f"${price:,.2f}"
+
 def generate_complete_ultimate_prompt(symbol, analysis):
     """Generate COMPLETE prompt with ALL analysis data included"""
     
@@ -61,7 +79,7 @@ def generate_complete_ultimate_prompt(symbol, analysis):
 - **Ultimate Score**: {ultimate_score['composite_score']}/100
 - **Confidence Level**: {ultimate_score.get('confidence_level', 'UNKNOWN')}
 - **Primary Bias**: {signals.get('primary_bias', 'NEUTRAL')}
-- **Current Price**: ${current_price:,.2f}
+- **Current Price**: {format_price(current_price)}
 
 ## Data Availability Status
 - **Available Timeframes**: {', '.join(available_timeframes) if available_timeframes else 'None'}
@@ -80,18 +98,18 @@ This analysis incorporates the following enhancements based on professional AI f
 5. **Professional Risk Management** (Institutional-grade analysis)
 
 Key improvements implemented:
-   - Current price display fixes (was showing $0.00)
-   - Technical score calculation corrections
-   - Comprehensive VWAP analysis integration
-   - Enhanced confluence analysis
-   - Detailed timeframe breakdowns
-   - Professional volume profile interpretation
-   - Institutional trading signal generation
-   - Risk-adjusted position sizing
-   - Multi-timeframe momentum analysis
-   - Enhanced Bollinger Band squeeze detection
-   - Fibonacci confluence identification
-   - Market structure analysis
+- Current price display fixes (was showing $0.00)
+- Technical score calculation corrections
+- Comprehensive VWAP analysis integration
+- Enhanced confluence analysis
+- Detailed timeframe breakdowns
+- Professional volume profile interpretation
+- Institutional trading signal generation
+- Risk-adjusted position sizing
+- Multi-timeframe momentum analysis
+- Enhanced Bollinger Band squeeze detection
+- Fibonacci confluence identification
+- Market structure analysis
 
 ## COMPREHENSIVE DATA PROVIDED"""
 
@@ -284,7 +302,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 psar_value = indicators.get('psar', None)
                 if psar_signal and psar_signal != 'NEUTRAL' and psar_value:
                     prompt += f"""
-  - **Parabolic SAR**: ${psar_value:.2f} ({psar_signal})"""
+  - **Parabolic SAR**: {format_price(psar_value)} ({psar_signal})"""
                 
                 # Ichimoku (if available)
                 ichimoku_signal = indicators.get('ichimoku_signal', None)
@@ -308,18 +326,18 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 if sma20 > 0 and current_price_ind > 0:
                     sma20_dist = ((current_price_ind - sma20) / sma20) * 100
                     prompt += f"""
-  - **SMA20**: ${sma20:.2f} (price {sma20_dist:+.1f}% {'above' if sma20_dist > 0 else 'below'})"""
+  - **SMA20**: {format_price(sma20)} (price {sma20_dist:+.1f}% {'above' if sma20_dist > 0 else 'below'})"""
                 
                 if sma50 > 0 and current_price_ind > 0:
                     sma50_dist = ((current_price_ind - sma50) / sma50) * 100
                     prompt += f"""
-  - **SMA50**: ${sma50:.2f} (price {sma50_dist:+.1f}% {'above' if sma50_dist > 0 else 'below'})"""
+  - **SMA50**: {format_price(sma50)} (price {sma50_dist:+.1f}% {'above' if sma50_dist > 0 else 'below'})"""
                 
                 if sma200 > 0 and current_price_ind > 0:
                     sma200_dist = ((current_price_ind - sma200) / sma200) * 100
                     bull_bear = 'BULL MARKET' if sma200_dist > 0 else 'BEAR MARKET'
                     prompt += f"""
-  - **SMA200**: ${sma200:.2f} (price {sma200_dist:+.1f}% {'above' if sma200_dist > 0 else 'below'}) ← {bull_bear}"""
+  - **SMA200**: {format_price(sma200)} (price {sma200_dist:+.1f}% {'above' if sma200_dist > 0 else 'below'}) ← {bull_bear}"""
                 
                 # ENHANCED Bollinger Bands analysis - ALL TIMEFRAMES
                 bb_upper = indicators.get('bb_upper', 0)
@@ -365,7 +383,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                         distance_analysis = f" | To Upper: {distance_to_upper:+.2f}% | To Lower: {distance_to_lower:+.2f}%"
                     
                     prompt += f"""
-  - **Bollinger Bands**: Upper: ${bb_upper:,.2f} | Middle: ${bb_middle:,.2f} | Lower: ${bb_lower:,.2f}
+  - **Bollinger Bands**: Upper: {format_price(bb_upper)} | Middle: {format_price(bb_middle)} | Lower: {format_price(bb_lower)}
   - **BB Position**: {bb_zone} zone {position_desc} | Signal: {bb_signal} | Width: {bb_width:.2f}%{squeeze_status}
   - **BB Trend**: {bb_trend_strength}{distance_analysis}"""
                 
@@ -385,7 +403,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     long_term_status = "Strong profit" if vwap_distance_percent > 20 else "Moderate profit" if vwap_distance_percent > 0 else "Underwater"
                     
                     prompt += f"""
-  - **Long-term VWAP**: ${vwap:.2f} ({long_term_status}: {vwap_distance_percent:+.2f}% from institutional avg cost)
+  - **Long-term VWAP**: {format_price(vwap)} ({long_term_status}: {vwap_distance_percent:+.2f}% from institutional avg cost)
   - **Signal**: {vwap_signal} | Position: {vwap_band_position}"""
                     
                     # Rolling VWAP analysis (more relevant for trading)
@@ -393,19 +411,19 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                         vwap_20_status = "Above" if vwap_20_distance_percent > 0 else "Below"
                         vwap_20_significance = "Bullish" if vwap_20_distance_percent > 2 else "Bearish" if vwap_20_distance_percent < -2 else "Neutral"
                         prompt += f"""
-  - **20-Period VWAP**: ${vwap_20:,.2f} ({vwap_20_status} by {abs(vwap_20_distance_percent):.2f}% - {vwap_20_significance})"""
+  - **20-Period VWAP**: {format_price(vwap_20)} ({vwap_20_status} by {abs(vwap_20_distance_percent):.2f}% - {vwap_20_significance})"""
                     
                     if vwap_50 > 0:
                         prompt += f"""
-  - **50-Period VWAP**: ${vwap_50:,.2f} ({vwap_50_distance_percent:+.2f}%)"""
+  - **50-Period VWAP**: {format_price(vwap_50)} ({vwap_50_distance_percent:+.2f}%)"""
                     
                     # VWAP Bands Analysis
                     if vwap_upper_1 > 0 and vwap_lower_1 > 0:
                         prompt += f"""
-  - **VWAP Bands**: 1σ: ${vwap_lower_1:,.0f} - ${vwap_upper_1:,.0f}"""
+  - **VWAP Bands**: 1σ: {format_price(vwap_lower_1)} - {format_price(vwap_upper_1)}"""
                         
                         if vwap_upper_2 > 0:
-                            prompt += f""" | 2σ: ${vwap_lower_2:,.0f} - ${vwap_upper_2:,.0f}"""
+                            prompt += f""" | 2σ: {format_price(vwap_lower_2)} - {format_price(vwap_upper_2)}"""
                     
                     # Trading implications based on VWAP analysis
                     trading_implication = ""
@@ -435,8 +453,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     balance_indicator = '⚖️ BALANCED' if market_balance == 'BALANCED' else '⬆️ UPPER HEAVY' if market_balance == 'UPPER_HEAVY' else '⬇️ LOWER HEAVY'
                     
                     prompt += f"""
-  - **Volume Profile**: POC: ${poc_price:.2f} ({poc_distance:+.1f}%) | VA: {va_position}
-  - **Value Area**: ${va_low:.2f} - ${va_high:.2f} | Signal: {va_signal}
+  - **Volume Profile**: POC: {format_price(poc_price)} ({poc_distance:+.1f}%) | VA: {va_position}
+  - **Value Area**: {format_price(va_low)} - {format_price(va_high)} | Signal: {va_signal}
   - **Distribution**: {volume_distribution} | HVN Levels: {hvn_count} | Balance: {balance_indicator}"""
                 
                 # ENHANCED Market Structure Analysis with Proximity Context
@@ -464,9 +482,9 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 # Critical proximity warnings
                 proximity_warning = ""
                 if distance_to_swing_low < 10 and nearest_swing_low > 0:
-                    proximity_warning = f" ⚠️ CRITICAL: Only {distance_to_swing_low:.1f}% above swing low ${nearest_swing_low:,.0f}"
+                    proximity_warning = f" ⚠️ CRITICAL: Only {distance_to_swing_low:.1f}% above swing low {format_price(nearest_swing_low)}"
                 elif distance_to_swing_high < 10 and nearest_swing_high > 0:
-                    proximity_warning = f" 🎯 TARGET: Only {distance_to_swing_high:.1f}% below swing high ${nearest_swing_high:,.0f}"
+                    proximity_warning = f" 🎯 TARGET: Only {distance_to_swing_high:.1f}% below swing high {format_price(nearest_swing_high)}"
                 
                 prompt += f"""
   - **Market Structure**: {market_structure} | Signal: {structure_signal}{structure_alert}
@@ -482,7 +500,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     range_position = "UPPER" if current_position_in_range > 70 else "LOWER" if current_position_in_range < 30 else "MIDDLE"
                     
                     prompt += f"""
-  - **Swing Range**: ${nearest_swing_low:,.0f} - ${nearest_swing_high:,.0f} | Position: {range_position} ({current_position_in_range:.1f}%)"""
+  - **Swing Range**: {format_price(nearest_swing_low)} - {format_price(nearest_swing_high)} | Position: {range_position} ({current_position_in_range:.1f}%)"""
                 
                 # Momentum Divergence Analysis
                 divergence_signal = indicators.get('divergence_signal', 'UNKNOWN')
@@ -530,7 +548,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 support_dist = ((current_price_ind - support) / current_price_ind) * 100
                 resistance_dist = ((resistance - current_price_ind) / current_price_ind) * 100
                 prompt += f"""
-  - **Support**: ${support:.2f} ({support_dist:.1f}% below) | **Resistance**: ${resistance:.2f} ({resistance_dist:.1f}% above)"""
+  - **Support**: {format_price(support)} ({support_dist:.1f}% below) | **Resistance**: {format_price(resistance)} ({resistance_dist:.1f}% above)"""
         # ENHANCED OBV DIVERGENCE ANALYSIS (Multi-Timeframe)
         obv_values = {}
         for tf_name, tf_data in mtf_data.get('timeframe_data', {}).items():
@@ -725,8 +743,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                         proximity_alert = " ⚠️ NEAR"
                     
                     prompt += f"""
-**{i+1}. ${zone['price']:,.2f}** - {zone['type']} | {strength_rating} ({zone['count']} confluences){proximity_alert}
-   Sources: {', '.join(zone['sources'][:3])}{"..." if len(zone['sources']) > 3 else ""} | {direction_info}"""
+**{i+1}. {format_price(zone['price'])}** - {zone['type']} | {strength_rating} ({zone['count']} confluences){proximity_alert}
+Sources: {', '.join(zone['sources'][:3])}{"..." if len(zone['sources']) > 3 else ""} | {direction_info}"""
                 
                 # Trading implications
                 nearest_support = min([z for z in confluence_zones if z['distance_percent'] < 0 and z['strength'] >= 2], 
@@ -735,8 +753,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                                        key=lambda x: x['distance'], default=None)
                 
                 if nearest_support and nearest_resistance:
-                    support_str = f"${nearest_support['price']:,.0f} ({abs(nearest_support['distance_percent']):.1f}% down)"
-                    resistance_str = f"${nearest_resistance['price']:,.0f} ({nearest_resistance['distance_percent']:.1f}% up)"
+                    support_str = f"{format_price(nearest_support['price'])} ({abs(nearest_support['distance_percent']):.1f}% down)"
+                    resistance_str = f"{format_price(nearest_resistance['price'])} ({nearest_resistance['distance_percent']:.1f}% up)"
                     
                     prompt += f"""
 
@@ -829,8 +847,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
 
 ### 📐 FIBONACCI RETRACEMENT ANALYSIS (From {source_timeframe} Swing)
 
-**Recent Swing**: ${swing_low:,.0f} → ${swing_high:,.0f} (Range: ${fib_range:,.0f})
-**Current Price**: ${current_price:,.2f}
+**Recent Swing**: {format_price(swing_low)} → {format_price(swing_high)} (Range: {format_price(fib_range)})
+**Current Price**: {format_price(current_price)}
 
 **Fibonacci Levels & Market Position**:"""
             
@@ -860,7 +878,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     proximity += " 🎯 MIDPOINT" 
                 
                 prompt += f"""
-- **{level_name}**: ${fib_price:,.2f} - {proximity}"""
+- **{level_name}**: {format_price(fib_price)} - {proximity}"""
             
             # Current position analysis
             if current_fib_percent > 78.6:
@@ -904,8 +922,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 resistance_dist = ((nearest_resistance[1] - current_price) / current_price) * 100
                 
                 prompt += f"""
-- **Next Support**: {nearest_support[0]} at ${nearest_support[1]:,.0f} ({support_dist:.1f}% down)
-- **Next Resistance**: {nearest_resistance[0]} at ${nearest_resistance[1]:,.0f} ({resistance_dist:.1f}% up)
+- **Next Support**: {nearest_support[0]} at {format_price(nearest_support[1])} ({support_dist:.1f}% down)
+- **Next Resistance**: {nearest_resistance[0]} at {format_price(nearest_resistance[1])} ({resistance_dist:.1f}% up)
 - **Range Trade**: Buy near Fib support, sell near Fib resistance  
 - **Breakout**: Above {nearest_resistance[0]} targets 78.6% or swing high
 - **Breakdown**: Below {nearest_support[0]} targets lower Fib levels or swing low"""
@@ -920,7 +938,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
 ### Volume Profile Analysis (COMPLETE INSTITUTIONAL DATA)
 
 **Point of Control (POC) - Fair Value**:
-- **Price**: ${vp.get('poc', {}).get('price', 0):,.2f}
+- **Price**: {format_price(vp.get('poc', {}).get('price', 0))}
 - **Volume**: {vp.get('poc', {}).get('volume', 0):,.0f} (highest volume price)"""
         
         if current_price > 0 and vp.get('poc', {}).get('price', 0) > 0:
@@ -932,8 +950,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
         prompt += f"""
 
 **Value Area (70% Volume Zone)**:
-- **High**: ${vp.get('value_area', {}).get('high', 0):,.2f}
-- **Low**: ${vp.get('value_area', {}).get('low', 0):,.2f}
+- **High**: {format_price(vp.get('value_area', {}).get('high', 0))}
+- **Low**: {format_price(vp.get('value_area', {}).get('low', 0))}
 - **Current Position**: {vp_data.get('price_context', {}).get('position', 'UNKNOWN')}"""
         
         # Add volume-based levels
@@ -949,7 +967,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     distance = ((r_price - current_price) / current_price) * 100
                     proximity = "← IMMEDIATE" if distance < 2 else "← NEAR" if distance < 5 else "← MAJOR"
                     prompt += f"""
-{i+1}. ${r_price:.2f} (+{distance:.1f}%) {proximity}"""
+{i+1}. {format_price(r_price)} (+{distance:.1f}%) {proximity}"""
         
         if levels.get('support'):
             prompt += """
@@ -960,7 +978,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                     distance = ((current_price - s_price) / current_price) * 100
                     proximity = "← IMMEDIATE" if distance < 2 else "← NEAR" if distance < 5 else "← MAJOR"
                     prompt += f"""
-{i+1}. ${s_price:.2f} (-{distance:.1f}%) {proximity}"""
+{i+1}. {format_price(s_price)} (-{distance:.1f}%) {proximity}"""
     
     # Add enhanced trading signals
     if signals:
@@ -978,7 +996,7 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
 **Key Trading Levels**:"""
             for level_type, levels in key_levels.items():
                 if isinstance(levels, list) and levels:
-                    level_list = [f'${l:,.2f}' for l in levels[:3]]
+                    level_list = [format_price(l) for l in levels[:3]]
                     prompt += f"""
 - {level_type.replace('_', ' ').title()}: {level_list}"""
     
@@ -1077,6 +1095,13 @@ As a **Senior Institutional Trader** with access to this COMPLETE dataset (100% 
 - Volume confirmation signals to monitor
 - Timeframe-specific exit triggers
 - Risk management checkpoints
+
+## PRECISION REQUIREMENTS
+**CRITICAL**: When referencing specific price levels in your analysis, maintain the precision provided in the data:
+- Use 4 decimal places for mid-range assets ($1-$100) like XRP: $2.5300, not $2.53
+- Use 6-8 decimals for low-value assets (<$1): $0.123456, not $0.12  
+- Use 2 decimals for high-value assets (>$100): $67,890.12
+- This precision is essential for accurate technical analysis and precise entry/exit levels
 
 ## Data Quality Statement
 **This analysis uses COMPLETE data with 100% analysis inclusion and 60% improved prediction accuracy vs baseline systems.**

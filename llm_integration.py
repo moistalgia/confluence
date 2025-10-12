@@ -17,6 +17,24 @@ from dotenv import load_dotenv
 # Load environment variables from config.env
 load_dotenv('config.env')
 
+def format_price(price):
+    """Format price with appropriate precision based on value"""
+    if price == 0:
+        return "$0.00"
+    
+    # For very small prices (< $0.01), use 6-8 decimal places
+    if price < 0.01:
+        return f"${price:.8f}"
+    # For small prices ($0.01 - $1), use 4-6 decimal places  
+    elif price < 1:
+        return f"${price:.6f}"
+    # For mid prices ($1 - $100), use 4 decimal places
+    elif price < 100:
+        return f"${price:.4f}"
+    # For higher prices ($100+), use 2 decimal places with comma separation
+    else:
+        return f"${price:,.2f}"
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -332,6 +350,7 @@ Provide actionable, institutional-grade analysis with specific price levels and 
         lines = markdown_text.split('\n')
         processed_lines = []
         in_list = False
+        list_type = None  # Track 'ul' or 'ol'
         
         for line in lines:
             line = line.strip()
@@ -339,8 +358,9 @@ Provide actionable, institutional-grade analysis with specific price levels and 
             # Skip empty lines and separators
             if not line or line == '---':
                 if in_list:
-                    processed_lines.append('</ul>')
+                    processed_lines.append(f'</{list_type}>')
                     in_list = False
+                    list_type = None
                 elif processed_lines and not processed_lines[-1].endswith('>'):
                     processed_lines.append('<br>')
                 continue
@@ -348,25 +368,31 @@ Provide actionable, institutional-grade analysis with specific price levels and 
             # Headers
             if line.startswith('### '):
                 if in_list:
-                    processed_lines.append('</ul>')
+                    processed_lines.append(f'</{list_type}>')
                     in_list = False
+                    list_type = None
                 processed_lines.append(f'<h4>{line[4:]}</h4>')
             elif line.startswith('## '):
                 if in_list:
-                    processed_lines.append('</ul>')
+                    processed_lines.append(f'</{list_type}>')
                     in_list = False
+                    list_type = None
                 processed_lines.append(f'<h3>{line[3:]}</h3>')
             elif line.startswith('# '):
                 if in_list:
-                    processed_lines.append('</ul>')
+                    processed_lines.append(f'</{list_type}>')
                     in_list = False
+                    list_type = None
                 processed_lines.append(f'<h2>{line[2:]}</h2>')
             
             # List items
             elif line.startswith('- '):
-                if not in_list:
+                if not in_list or list_type != 'ul':
+                    if in_list:  # Close previous list if different type
+                        processed_lines.append(f'</{list_type}>')
                     processed_lines.append('<ul>')
                     in_list = True
+                    list_type = 'ul'
                 # Process bold text in list items
                 item_content = line[2:]
                 item_content = self._process_bold_text(item_content)
@@ -374,9 +400,12 @@ Provide actionable, institutional-grade analysis with specific price levels and 
             
             # Numbered lists
             elif line[0].isdigit() and '. ' in line[:4]:
-                if not in_list:
+                if not in_list or list_type != 'ol':
+                    if in_list:  # Close previous list if different type
+                        processed_lines.append(f'</{list_type}>')
                     processed_lines.append('<ol>')
                     in_list = True
+                    list_type = 'ol'
                 item_content = line.split('. ', 1)[1]
                 item_content = self._process_bold_text(item_content)
                 processed_lines.append(f'<li>{item_content}</li>')
@@ -384,15 +413,16 @@ Provide actionable, institutional-grade analysis with specific price levels and 
             # Regular paragraphs
             else:
                 if in_list:
-                    processed_lines.append('</ul>')
+                    processed_lines.append(f'</{list_type}>')
                     in_list = False
+                    list_type = None
                 # Process bold text
                 line_content = self._process_bold_text(line)
                 processed_lines.append(f'<p>{line_content}</p>')
         
         # Close any open list
         if in_list:
-            processed_lines.append('</ul>')
+            processed_lines.append(f'</{list_type}>')
         
         return '\n'.join(processed_lines)
     
@@ -560,7 +590,7 @@ Provide actionable, institutional-grade analysis with specific price levels and 
         
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">${current_price:,.2f}</div>
+                <div class="metric-value">{format_price(current_price)}</div>
                 <div class="metric-label">Current Price</div>
             </div>
             <div class="metric-card">
@@ -576,11 +606,11 @@ Provide actionable, institutional-grade analysis with specific price levels and 
                 <div class="metric-label">Confidence</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">${poc_price:,.2f}</div>
+                <div class="metric-value">{format_price(poc_price)}</div>
                 <div class="metric-label">POC Price</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">${va_high:,.2f} - ${va_low:,.2f}</div>
+                <div class="metric-value">{format_price(va_high)} - {format_price(va_low)}</div>
                 <div class="metric-label">Value Area</div>
             </div>
         </div>
@@ -651,12 +681,12 @@ Provide actionable, institutional-grade analysis with specific price levels and 
 
 | Metric | Value |
 |--------|--------|
-| **Current Price** | ${current_price:,.2f} |
+| **Current Price** | {format_price(current_price)} |
 | **Ultimate Score** | {ultimate_score:.1f}/100 |
 | **Primary Bias** | **{primary_bias}** |
 | **Confidence** | **{confidence}** |
-| **POC Price** | ${poc_price:,.2f} |
-| **Value Area** | ${va_low:,.2f} - ${va_high:,.2f} |
+| **POC Price** | {format_price(poc_price)} |
+| **Value Area** | {format_price(va_low)} - {format_price(va_high)} |
 
 ---
 

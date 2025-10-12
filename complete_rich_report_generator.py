@@ -11,6 +11,63 @@ from datetime import datetime
 from typing import Dict, Any
 import re
 
+def simple_markdown_to_html(text: str) -> str:
+    """Convert simple markdown to HTML with proper list formatting"""
+    if not text:
+        return ""
+    
+    html = text
+    
+    # Convert headers
+    html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+    html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
+    html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
+    
+    # Convert bold text
+    html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
+    
+    # Convert numbered lists - fix the main issue
+    lines = html.split('\n')
+    result_lines = []
+    in_ol = False
+    
+    for i, line in enumerate(lines):
+        # Check for numbered list items (1. 2. 3. etc.)
+        if re.match(r'^\s*\d+\.\s+', line):
+            if not in_ol:
+                result_lines.append('<ol>')
+                in_ol = True
+            # Convert numbered item to list item
+            item_text = re.sub(r'^\s*\d+\.\s+', '', line)
+            result_lines.append(f'<li>{item_text}</li>')
+        else:
+            if in_ol:
+                result_lines.append('</ol>')
+                in_ol = False
+            
+            # Handle bullet points
+            if re.match(r'^\s*[-*]\s+', line):
+                # Start unordered list if not in one
+                if not (i > 0 and re.match(r'^\s*[-*]\s+', lines[i-1])):
+                    result_lines.append('<ul>')
+                item_text = re.sub(r'^\s*[-*]\s+', '', line)
+                result_lines.append(f'<li>{item_text}</li>')
+                # Close unordered list if next line is not a bullet
+                if i + 1 >= len(lines) or not re.match(r'^\s*[-*]\s+', lines[i + 1]):
+                    result_lines.append('</ul>')
+            else:
+                # Regular paragraph
+                if line.strip():
+                    result_lines.append(f'<p>{line}</p>')
+                else:
+                    result_lines.append('')
+    
+    # Close any remaining open ordered list
+    if in_ol:
+        result_lines.append('</ol>')
+    
+    return '\n'.join(result_lines)
+
 # Add current directory to path
 sys.path.append(str(Path(__file__).parent))
 
@@ -66,8 +123,9 @@ def generate_complete_rich_report(symbol: str, analysis: Dict, llm_response: Dic
     if 'price_analysis' in vp_data:
         current_price = vp_data['price_analysis'].get('current_price', 0)
     
-    # Extract LLM recommendations
-    llm_content = llm_response.get('response_content', '')
+    # Extract LLM recommendations and convert markdown to HTML
+    llm_content_raw = llm_response.get('response_content', '')
+    llm_content = simple_markdown_to_html(llm_content_raw)
     
     # Generate timestamp
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
