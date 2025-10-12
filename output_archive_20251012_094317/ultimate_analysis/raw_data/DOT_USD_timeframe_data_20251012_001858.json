@@ -1,0 +1,287 @@
+{
+  "1h": {
+    "data_points": 168,
+    "date_range": {
+      "start": "2025-10-05T05:00:00",
+      "end": "2025-10-12T04:00:00"
+    },
+    "indicators": {
+      "sma_short": 2.9824,
+      "sma_long": 3.458862,
+      "ema": 3.092570556749506,
+      "macd": -0.09757102900463988,
+      "macd_signal": -0.12074458220385137,
+      "macd_histogram": 0.023173553199211494,
+      "rsi": 34.42826884011977,
+      "rsi_overbought": "False",
+      "rsi_oversold": "False",
+      "bb_upper": 3.286160529530165,
+      "bb_middle": 3.077225,
+      "bb_lower": 2.868289470469835,
+      "bb_width": 13.57947693328664,
+      "bb_width_sma": 21.092379321925723,
+      "bb_width_percentile_20": 40.0,
+      "bb_width_percentile_50": 52.0,
+      "bb_width_percentile_100": 76.0,
+      "squeeze_detected": true,
+      "squeeze_intensity": "NORMAL",
+      "bb_position": 0.368799241270058,
+      "bb_zone": "MIDDLE",
+      "bb_signal": "NEUTRAL",
+      "distance_to_upper": 8.726857117858806,
+      "distance_to_lower": 5.098945524423149,
+      "distance_to_middle": -1.8139557967178292,
+      "bb_upper_slope": -1.069346981936905,
+      "bb_middle_slope": -1.4775683355344893,
+      "bb_lower_slope": -1.9411406341275579,
+      "bb_expansion": null,
+      "bb_trend_strength": "MIXED",
+      "recent_squeeze_frequency": 48.0,
+      "avg_squeeze_duration": 8.0,
+      "bb_summary": "Position: MIDDLE (0.37) | Width: 13.58% (Percentile: 52th) | SQUEEZE: NORMAL | Trend: MIXED",
+      "error": "'atr'"
+    },
+    "has_ohlcv_data": true
+  },
+  "1w": {
+    "data_points": 100,
+    "date_range": {
+      "start": "2023-11-16T00:00:00",
+      "end": "2025-10-09T00:00:00"
+    },
+    "indicators": {
+      "sma_short": 3.9812400000000006,
+      "sma_long": 4.880682,
+      "ema": 4.034326563700803,
+      "macd": -0.1759862666933647,
+      "macd_signal": -0.14730569036835717,
+      "macd_histogram": -0.028680576325007534,
+      "rsi": 42.862110818011864,
+      "rsi_overbought": "False",
+      "rsi_oversold": "False",
+      "bb_upper": 4.568365935274657,
+      "bb_middle": 3.8955149999999996,
+      "bb_lower": 3.2226640647253424,
+      "bb_width": 34.54490280615822,
+      "bb_width_sma": 42.45639726362066,
+      "bb_width_percentile_20": 10.0,
+      "bb_width_percentile_50": 4.0,
+      "bb_width_percentile_100": 2.0,
+      "squeeze_detected": true,
+      "squeeze_intensity": "EXTREME",
+      "bb_position": -0.14703410098150083,
+      "bb_zone": "LOWER_EXTREME",
+      "bb_signal": "POTENTIAL_SUPPORT",
+      "distance_to_upper": 51.03034697416877,
+      "distance_to_lower": -6.541393306180325,
+      "distance_to_middle": -28.785870140174545,
+      "bb_upper_slope": -5.900184485142092,
+      "bb_middle_slope": -3.632059193510702,
+      "bb_lower_slope": -0.22283730983793212,
+      "bb_expansion": null,
+      "bb_trend_strength": "MIXED",
+      "recent_squeeze_frequency": 66.0,
+      "avg_squeeze_duration": 3.5,
+      "bb_summary": "Position: LOWER_EXTREME (-0.15) | Width: 34.54% (Percentile: 4th) | SQUEEZE: EXTREME | Trend: MIXED",
+      "atr": 0.7605763402711371,
+      "atr_stop_loss": 1.5036473194577258,
+      "atr_take_profit": 6.067105361084549,
+      "atr_percent": 25.1446819714076,
+      "volume_sma": 3608963.8987105913,
+      "volume_ratio": 1.5495709317974613,
+      "obv": -39028833.55979915,
+      "vwap": 6.10241741167144,
+      "vwap_distance": -3.07761741167144,
+      "vwap_distance_percent": -50.43275810312829,
+      "vwap_position": "STRONG_BELOW",
+      "vwap_signal": "BEARISH",
+      "vwap_20": 3.9439574516102813,
+      "vwap_20_distance_percent": -23.30546064169627,
+      "vwap_50": 5.356421211840537,
+      "vwap_50_distance_percent": -43.52945968264063,
+      "vwap_upper_1": 8.12742435552782,
+      "vwap_lower_1": 4.07741046781506,
+      "vwap_upper_2": 10.152431299384201,
+      "vwap_lower_2": 2.052403523958679,
+      "vwap_band_position": "BELOW_1STD",
+      "poc_price": 4.2846,
+      "poc_volume": 35290100.01540207,
+      "poc_distance": -41.649034646918814,
+      "va_high": 9.4216,
+      "va_low": 3.2571999999999997,
+      "va_width": 189.2545744811495,
+      "va_position": "BELOW_VALUE_AREA",
+      "va_signal": "POTENTIAL_SUPPORT",
+      "distance_to_va_high": 211.47844485585824,
+      "distance_to_va_low": -7.683152605130908,
+      "hvn_count": 7,
+      "hvn_levels": [
+        {
+          "price": 3.9109999999999996,
+          "volume": 18410049.72958731,
+          "distance": -29.29780481354138
+        },
+        {
+          "price": 4.097799999999999,
+          "volume": 31395497.118984483,
+          "distance": -35.473419730230084
+        },
+        {
+          "price": 4.2846,
+          "volume": 35290100.01540207,
+          "distance": -41.649034646918814
+        },
+        {
+          "price": 4.6582,
+          "volume": 15055156.21758715,
+          "distance": -54.000264480296224
+        },
+        {
+          "price": 5.0318,
+          "volume": 15544139.32390141,
+          "distance": -66.35149431367363
+        },
+        {
+          "price": 6.712999999999999,
+          "volume": 17616832.36161034,
+          "distance": -121.93202856387198
+        },
+        {
+          "price": 7.0866,
+          "volume": 25803269.90558811,
+          "distance": -134.2832583972494
+        }
+      ],
+      "lvn_count": 2,
+      "lvn_levels": [
+        {
+          "price": 8.581,
+          "volume": 2539582.81923931,
+          "distance": -183.68817773075904
+        },
+        {
+          "price": 8.7678,
+          "volume": 2877371.3117835,
+          "distance": -189.86379264744775
+        }
+      ],
+      "volume_concentration": 10.150500416460002,
+      "volume_distribution": "MODERATELY_CONCENTRATED",
+      "distribution_signal": "MODERATE_SUPPORT_RESISTANCE",
+      "poc_acceptance": 18.0,
+      "price_acceptance": "MODERATE",
+      "volume_balance": 3.6775267177478397,
+      "market_balance": "UPPER_HEAVY",
+      "nearest_hvn_distance": null,
+      "hvn_strength": "NONE",
+      "vp_summary": "POC: $4.28 (-41.6%) | VA: BELOW_VALUE_AREA | HVN: 7 levels | Distribution: MODERATELY_CONCENTRATED",
+      "swing_highs_count": 6,
+      "swing_lows_count": 6,
+      "higher_highs": 0,
+      "lower_highs": 2,
+      "high_structure": "LOWER_HIGHS",
+      "higher_lows": 0,
+      "lower_lows": 2,
+      "low_structure": "LOWER_LOWS",
+      "market_structure": "STRONG_DOWNTREND",
+      "structure_signal": "BEARISH",
+      "structure_breaks": [],
+      "break_count": 0,
+      "nearest_swing_high": 4.6711,
+      "distance_to_swing_high": 54.42673895794764,
+      "nearest_swing_low": 3.016,
+      "distance_to_swing_low": 0.2909283258397223,
+      "resistance_tests": 2,
+      "support_tests": 1,
+      "resistance_strength": "MODERATE",
+      "support_strength": "WEAK",
+      "recent_momentum": -31.302945651927054,
+      "trend_change_signal": "TREND_CONTINUATION",
+      "ms_summary": "Structure: STRONG_DOWNTREND | Signal: BEARISH",
+      "bullish_divergences": [
+        {
+          "type": "MACD_BULLISH",
+          "strength": 18.301161019583606,
+          "price_diff": 11.392198020881604,
+          "macd_diff": 0.12243118586627322,
+          "periods_ago": 28
+        },
+        {
+          "type": "MACD_BULLISH",
+          "strength": 14.614828849480316,
+          "price_diff": 7.211420132906718,
+          "macd_diff": 0.07987723675398861,
+          "periods_ago": 17
+        }
+      ],
+      "bearish_divergences": [],
+      "hidden_bullish": [],
+      "hidden_bearish": [
+        {
+          "type": "HIDDEN_BEARISH_RSI",
+          "strength": 16.25663403393014,
+          "periods_ago": 46
+        }
+      ],
+      "bullish_div_count": 2,
+      "bearish_div_count": 0,
+      "hidden_bullish_count": 0,
+      "hidden_bearish_count": 1,
+      "divergence_signal": "BULLISH",
+      "divergence_strength": "STRONG",
+      "recent_bullish_count": 0,
+      "recent_bearish_count": 0,
+      "recent_divergence": false,
+      "recent_divergence_type": "NONE",
+      "momentum_confirmation": [],
+      "confirmation_count": 0,
+      "divergence_summary": "Signal: BULLISH | Strength: STRONG",
+      "price": 3.0248,
+      "resistance_level": 4.8786,
+      "support_level": 2.51,
+      "position_in_range": 0.2173435784851812,
+      "error": "'sma_50'"
+    },
+    "has_ohlcv_data": true
+  },
+  "4h": {
+    "data_points": 300,
+    "date_range": {
+      "start": "2025-08-23T08:00:00",
+      "end": "2025-10-12T04:00:00"
+    },
+    "indicators": {
+      "sma_short": 3.17809,
+      "sma_long": 3.9858140000000004,
+      "ema": 3.516720585727951,
+      "macd": -0.3571237424622451,
+      "macd_signal": -0.29743798372268737,
+      "macd_histogram": -0.059685758739557726,
+      "rsi": 29.143286425932843,
+      "rsi_overbought": "False",
+      "rsi_oversold": "True",
+      "error": "stoch() got an unexpected keyword argument 'k'"
+    },
+    "has_ohlcv_data": true
+  },
+  "1d": {
+    "data_points": 200,
+    "date_range": {
+      "start": "2025-03-27T00:00:00",
+      "end": "2025-10-12T00:00:00"
+    },
+    "indicators": {
+      "sma_short": 3.8615100000000004,
+      "sma_long": 4.00611,
+      "ema": 3.866738457588022,
+      "macd": -0.297044017035033,
+      "macd_signal": -0.09680154223148298,
+      "macd_histogram": -0.20024247480355006,
+      "rsi": 38.49435067831628,
+      "rsi_overbought": "False",
+      "rsi_oversold": "False",
+      "error": "stoch() got an unexpected keyword argument 'k'"
+    },
+    "has_ohlcv_data": true
+  }
+}

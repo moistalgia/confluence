@@ -1,0 +1,46 @@
+{
+  "1h": {
+    "data_points": 168,
+    "date_range": {
+      "start": "2025-10-05T05:00:00",
+      "end": "2025-10-12T04:00:00"
+    },
+    "indicators": {
+      "error": "Failed to calculate indicators"
+    },
+    "has_ohlcv_data": true
+  },
+  "4h": {
+    "data_points": 300,
+    "date_range": {
+      "start": "2025-08-23T08:00:00",
+      "end": "2025-10-12T04:00:00"
+    },
+    "indicators": {
+      "error": "Failed to calculate indicators"
+    },
+    "has_ohlcv_data": true
+  },
+  "1d": {
+    "data_points": 200,
+    "date_range": {
+      "start": "2025-03-27T00:00:00",
+      "end": "2025-10-12T00:00:00"
+    },
+    "indicators": {
+      "error": "Failed to calculate indicators"
+    },
+    "has_ohlcv_data": true
+  },
+  "1w": {
+    "data_points": 100,
+    "date_range": {
+      "start": "2023-11-16T00:00:00",
+      "end": "2025-10-09T00:00:00"
+    },
+    "indicators": {
+      "error": "Failed to calculate indicators"
+    },
+    "has_ohlcv_data": true
+  }
+}

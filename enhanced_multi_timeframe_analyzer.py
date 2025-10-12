@@ -361,7 +361,8 @@ class EnhancedMultiTimeframeAnalyzer:
         Enhanced multi-timeframe analysis
         Returns comprehensive analysis across all timeframes
         """
-        logger.info(f"Starting enhanced multi-timeframe analysis for {symbol}")
+        logger.info(f"DEBUG-ENTRY-MULTI: Starting enhanced multi-timeframe analysis for {symbol}")
+        logger.info(f"DEBUG-ENTRY-MULTI: parallel_processing={self.parallel_processing}, timeframes_count={len(self.timeframes)}")
         
         try:
             analysis_result = {
@@ -457,6 +458,12 @@ class EnhancedMultiTimeframeAnalyzer:
             analysis_result['timeframe_data'] = timeframe_data
             
             # Perform confluence analysis with graceful degradation
+            # Initialize confluence with empty structure
+            confluence = {
+                'overall_confluence': {'confluence_score': 0},
+                'error': 'Confluence analysis not executed'
+            }
+            
             try:
                 if successful_timeframes > 0:
                     # Filter out failed timeframes for confluence analysis
@@ -491,6 +498,7 @@ class EnhancedMultiTimeframeAnalyzer:
                     'error': f'Confluence analysis failed: {str(e)}',
                     'status': 'error'
                 }
+                # Keep the default confluence structure for signal generation
             
             # Generate enhanced trading signals
             signals = self._generate_enhanced_signals(timeframe_data, confluence)
@@ -590,6 +598,7 @@ class EnhancedMultiTimeframeAnalyzer:
         """
         Enhanced timeframe data fetching with comprehensive error handling and validation
         """
+        logger.info(f"DEBUG-ENTRY: _fetch_and_analyze_timeframe called for {symbol} {timeframe}")
         try:
             # Validate inputs
             if not symbol or not timeframe:
@@ -639,7 +648,9 @@ class EnhancedMultiTimeframeAnalyzer:
             df = df.set_index('timestamp')
             
             # Calculate technical indicators with error handling
+            logger.info(f"DEBUG: About to calculate indicators for {symbol} {timeframe}, df shape: {df.shape}")
             indicators = self._calculate_enhanced_indicators(df, timeframe)
+            logger.info(f"DEBUG: Indicators result for {symbol} {timeframe}: {type(indicators)}, keys: {list(indicators.keys()) if isinstance(indicators, dict) else 'NOT_DICT'}")
             
             # Validate indicators
             if not indicators or len(indicators) == 0:
@@ -745,7 +756,7 @@ class EnhancedMultiTimeframeAnalyzer:
             """Worker function for parallel execution"""
             tf, config = tf_config_pair
             try:
-                logger.debug(f"Worker analyzing {tf} for {symbol}")
+                logger.info(f"DEBUG-WORKER: Worker analyzing {tf} for {symbol}")
                 result = self._fetch_and_analyze_timeframe(symbol, tf, config)
                 
                 if result and result.get('status') == 'success':
@@ -788,20 +799,25 @@ class EnhancedMultiTimeframeAnalyzer:
                 }
         
         # Execute parallel analysis with ThreadPoolExecutor
+        logger.info(f"DEBUG-PARALLEL: Starting ThreadPoolExecutor with {self.max_workers} workers for {len(sorted_timeframes)} timeframes")
         with ThreadPoolExecutor(max_workers=self.max_workers, thread_name_prefix=f"TF-{symbol}") as executor:
             # Submit all timeframe analysis tasks
+            logger.info(f"DEBUG-PARALLEL: Submitting tasks for timeframes: {[tf[0] for tf in sorted_timeframes]}")
             future_to_tf = {
                 executor.submit(analyze_single_timeframe, tf_config): tf_config[0]
                 for tf_config in sorted_timeframes
             }
+            logger.info(f"DEBUG-PARALLEL: Submitted {len(future_to_tf)} tasks to executor")
             
             # Collect results as they complete
+            logger.info(f"DEBUG-PARALLEL: Collecting results from {len(future_to_tf)} futures")
             for future in as_completed(future_to_tf):
                 tf = future_to_tf[future]
+                logger.info(f"DEBUG-PARALLEL: Processing future result for {tf}")
                 try:
                     timeframe, result = future.result(timeout=60)  # 60-second timeout per timeframe
                     timeframe_data[timeframe] = result
-                    logger.debug(f"Completed parallel analysis for {timeframe}")
+                    logger.info(f"DEBUG-PARALLEL: Successfully completed parallel analysis for {timeframe}")
                     
                 except Exception as e:
                     logger.error(f"Parallel execution failed for {tf}: {e}")
@@ -851,7 +867,7 @@ class EnhancedMultiTimeframeAnalyzer:
         logger.info("Performance cache cleared and metrics reset")
     
     @cached_method(ttl=60)  # 1-minute cache for indicators
-    @safe_calculation(default_value={})
+    # @safe_calculation(default_value={})  # Temporarily disabled to see actual errors
     def _calculate_enhanced_indicators(self, df: pd.DataFrame, timeframe: str) -> Dict:
         """Calculate enhanced technical indicators for a specific timeframe using configuration"""
         

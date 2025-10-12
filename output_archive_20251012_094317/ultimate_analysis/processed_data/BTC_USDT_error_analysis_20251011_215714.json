@@ -1,0 +1,22 @@
+{
+  "symbol": "BTC/USDT",
+  "timestamp": "2025-10-11T21:57:14.021596",
+  "session_id": "20251011_215629",
+  "ai_feedback_implementation": {
+    "confidence_boost_expected": "+60%",
+    "data_completeness": "80%",
+    "enhancements": [
+      "Multi-Timeframe Data (Daily/4H/1H/15M)",
+      "Volume Profile (VAP, POC, Value Area)",
+      "Enhanced Indicators (Stoch RSI, ADX, ATR, VWAP)",
+      "Market Structure (Swings, Fibonacci, Pivots)"
+    ]
+  },
+  "data_persistence": {
+    "raw_data_saved": false,
+    "processed_data_saved": false,
+    "prompt_saved": false,
+    "response_saved": false
+  },
+  "error": "'EnhancedMultiTimeframeAnalyzer' object has no attribute 'fetch_multi_timeframe_data'"
+}

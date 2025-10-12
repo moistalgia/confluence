@@ -156,7 +156,8 @@ class CryptoAnalysisPipeline:
                 }
             
             # Find the generated analysis file
-            analysis_files = list(self.base_output_dir.glob(f"ultimate_{symbol.replace('/', '_')}_*.json"))
+            processed_data_dir = self.base_output_dir / "processed_data"
+            analysis_files = list(processed_data_dir.glob(f"{symbol.replace('/', '_')}_processed_analysis_*.json"))
             if not analysis_files:
                 return {
                     'status': 'file_error',
@@ -169,7 +170,7 @@ class CryptoAnalysisPipeline:
             latest_analysis_file = max(analysis_files, key=lambda x: x.stat().st_mtime)
             
             # Load analysis data
-            with open(latest_analysis_file, 'r') as f:
+            with open(latest_analysis_file, 'r', encoding='utf-8') as f:
                 analysis_data = json.load(f)
             
             logger.info(f"✅ Ultimate analysis complete for {symbol}")

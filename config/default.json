@@ -78,7 +78,8 @@
         "macd",
         "bollinger_bands",
         "atr",
-        "adx"
+        "adx",
+        "stochastic"
       ]
     },
     "1d": {
@@ -117,7 +118,9 @@
       "indicators_enabled": [
         "rsi",
         "macd",
-        "bollinger_bands"
+        "bollinger_bands",
+        "stochastic",
+        "atr"
       ]
     }
   }

@@ -1,0 +1,337 @@
+{
+  "pipeline_runs": [
+    {
+      "pipeline_id": "20251011_222222",
+      "start_time": "2025-10-11T22:22:22.361606",
+      "symbols_processed": [
+        "BTC/USDT",
+        "ETH/USDT"
+      ],
+      "total_symbols": 2,
+      "success_count": 0,
+      "error_count": 2,
+      "results": {
+        "BTC/USDT": {
+          "status": "partial_success",
+          "symbol": "BTC/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_BTC_USDT_20251011_220950.json",
+          "llm_error": "LLM request failed",
+          "step_completed": "ultimate_analysis",
+          "step_failed": "llm_processing"
+        },
+        "ETH/USDT": {
+          "status": "partial_success",
+          "symbol": "ETH/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_ETH_USDT_20251011_220954.json",
+          "llm_error": "LLM request failed",
+          "step_completed": "ultimate_analysis",
+          "step_failed": "llm_processing"
+        }
+      },
+      "end_time": "2025-10-11T22:22:33.265366",
+      "duration_seconds": 10.903764
+    },
+    {
+      "pipeline_id": "20251011_222900",
+      "start_time": "2025-10-11T22:29:00.242805",
+      "symbols_processed": [
+        "BTC/USDT",
+        "ETH/USDT"
+      ],
+      "total_symbols": 2,
+      "success_count": 2,
+      "error_count": 0,
+      "results": {
+        "BTC/USDT": {
+          "status": "success",
+          "symbol": "BTC/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_BTC_USDT_20251011_220950.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\BTC_USDT_llm_analysis_20251011_222944.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251011_222944.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251011_222944.md",
+          "llm_model": "claude",
+          "duration_seconds": 43.935071,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        },
+        "ETH/USDT": {
+          "status": "success",
+          "symbol": "ETH/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_ETH_USDT_20251011_220954.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\ETH_USDT_llm_analysis_20251011_223020.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251011_223020.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251011_223020.md",
+          "llm_model": "claude",
+          "duration_seconds": 36.605269,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        }
+      },
+      "end_time": "2025-10-11T22:30:20.784624",
+      "duration_seconds": 80.541823
+    },
+    {
+      "pipeline_id": "20251011_223934",
+      "start_time": "2025-10-11T22:39:34.389566",
+      "symbols_processed": [
+        "BTC/USDT",
+        "ETH/USDT"
+      ],
+      "total_symbols": 2,
+      "success_count": 2,
+      "error_count": 0,
+      "results": {
+        "BTC/USDT": {
+          "status": "success",
+          "symbol": "BTC/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_BTC_USDT_20251011_220950.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\BTC_USDT_llm_analysis_20251011_224017.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251011_224017.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251011_224017.md",
+          "llm_model": "claude",
+          "duration_seconds": 42.900621,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        },
+        "ETH/USDT": {
+          "status": "success",
+          "symbol": "ETH/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_ETH_USDT_20251011_220954.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\ETH_USDT_llm_analysis_20251011_224054.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251011_224054.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251011_224054.md",
+          "llm_model": "claude",
+          "duration_seconds": 37.651021,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        }
+      },
+      "end_time": "2025-10-11T22:40:54.942234",
+      "duration_seconds": 80.552671
+    },
+    {
+      "pipeline_id": "20251011_225108",
+      "start_time": "2025-10-11T22:51:08.399455",
+      "symbols_processed": [
+        "BTC/USDT",
+        "ETH/USDT"
+      ],
+      "total_symbols": 2,
+      "success_count": 2,
+      "error_count": 0,
+      "results": {
+        "BTC/USDT": {
+          "status": "success",
+          "symbol": "BTC/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_BTC_USDT_20251011_220950.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\BTC_USDT_llm_analysis_20251011_225157.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251011_225157.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251011_225157.md",
+          "llm_model": "claude",
+          "duration_seconds": 49.522345,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        },
+        "ETH/USDT": {
+          "status": "success",
+          "symbol": "ETH/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_ETH_USDT_20251011_220954.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\ETH_USDT_llm_analysis_20251011_225244.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251011_225244.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251011_225244.md",
+          "llm_model": "claude",
+          "duration_seconds": 46.708316,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        }
+      },
+      "end_time": "2025-10-11T22:52:44.631121",
+      "duration_seconds": 96.231669
+    },
+    {
+      "pipeline_id": "20251012_002051",
+      "start_time": "2025-10-12T00:20:51.728131",
+      "symbols_processed": [
+        "BTC/USDT",
+        "ETH/USDT"
+      ],
+      "total_symbols": 2,
+      "success_count": 0,
+      "error_count": 2,
+      "results": {
+        "BTC/USDT": {
+          "status": "partial_success",
+          "symbol": "BTC/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_BTC_USDT_20251011_220950.json",
+          "llm_error": "'>' not supported between instances of 'NoneType' and 'int'",
+          "step_completed": "ultimate_analysis",
+          "step_failed": "llm_processing"
+        },
+        "ETH/USDT": {
+          "status": "partial_success",
+          "symbol": "ETH/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_ETH_USDT_20251011_220954.json",
+          "llm_error": "'>' not supported between instances of 'NoneType' and 'int'",
+          "step_completed": "ultimate_analysis",
+          "step_failed": "llm_processing"
+        }
+      },
+      "end_time": "2025-10-12T00:20:55.310974",
+      "duration_seconds": 3.582847
+    },
+    {
+      "pipeline_id": "20251012_002612",
+      "start_time": "2025-10-12T00:26:12.702963",
+      "symbols_processed": [
+        "BTC/USDT",
+        "ETH/USDT"
+      ],
+      "total_symbols": 2,
+      "success_count": 2,
+      "error_count": 0,
+      "results": {
+        "BTC/USDT": {
+          "status": "success",
+          "symbol": "BTC/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_BTC_USDT_20251011_220950.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\BTC_USDT_llm_analysis_20251012_002658.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251012_002658.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251012_002658.md",
+          "llm_model": "claude",
+          "duration_seconds": 45.310686,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        },
+        "ETH/USDT": {
+          "status": "success",
+          "symbol": "ETH/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_ETH_USDT_20251011_220954.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\ETH_USDT_llm_analysis_20251012_002745.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251012_002745.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251012_002745.md",
+          "llm_model": "claude",
+          "duration_seconds": 47.805114,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        }
+      },
+      "end_time": "2025-10-12T00:27:45.819643",
+      "duration_seconds": 93.116683
+    },
+    {
+      "pipeline_id": "20251012_010621",
+      "start_time": "2025-10-12T01:06:21.387779",
+      "symbols_processed": [
+        "BTC/USDT",
+        "ETH/USDT"
+      ],
+      "total_symbols": 2,
+      "success_count": 2,
+      "error_count": 0,
+      "results": {
+        "BTC/USDT": {
+          "status": "success",
+          "symbol": "BTC/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_BTC_USDT_20251011_220950.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\BTC_USDT_llm_analysis_20251012_010707.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251012_010707.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251012_010707.md",
+          "llm_model": "claude",
+          "duration_seconds": 46.576447,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        },
+        "ETH/USDT": {
+          "status": "success",
+          "symbol": "ETH/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_ETH_USDT_20251011_220954.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\ETH_USDT_llm_analysis_20251012_010759.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251012_010759.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251012_010759.md",
+          "llm_model": "claude",
+          "duration_seconds": 51.075097,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        }
+      },
+      "end_time": "2025-10-12T01:07:59.040362",
+      "duration_seconds": 97.652587
+    },
+    {
+      "pipeline_id": "20251012_092724",
+      "start_time": "2025-10-12T09:27:24.828510",
+      "symbols_processed": [
+        "BTC/USDT",
+        "ETH/USDT"
+      ],
+      "total_symbols": 2,
+      "success_count": 2,
+      "error_count": 0,
+      "results": {
+        "BTC/USDT": {
+          "status": "success",
+          "symbol": "BTC/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_BTC_USDT_20251011_220950.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\BTC_USDT_llm_analysis_20251012_092810.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251012_092810.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\BTC_USDT_trading_report_20251012_092810.md",
+          "llm_model": "claude",
+          "duration_seconds": 46.151921,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        },
+        "ETH/USDT": {
+          "status": "success",
+          "symbol": "ETH/USDT",
+          "analysis_file": "output\\ultimate_analysis\\ultimate_ETH_USDT_20251011_220954.json",
+          "llm_response_file": "output\\ultimate_analysis\\llm_responses\\ETH_USDT_llm_analysis_20251012_092900.json",
+          "html_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251012_092900.html",
+          "markdown_report": "output\\ultimate_analysis\\rich_reports\\ETH_USDT_trading_report_20251012_092900.md",
+          "llm_model": "claude",
+          "duration_seconds": 49.247569,
+          "steps_completed": [
+            "ultimate_analysis",
+            "llm_processing",
+            "report_generation"
+          ]
+        }
+      },
+      "end_time": "2025-10-12T09:29:00.229372",
+      "duration_seconds": 95.400867
+    }
+  ],
+  "last_updated": "2025-10-12T09:29:00.229382"
+}

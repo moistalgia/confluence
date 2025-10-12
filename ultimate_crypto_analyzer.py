@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict
 import logging
+from complete_prompt_generator import generate_complete_ultimate_prompt
 
 # Import our enhanced modules
 from enhanced_multi_timeframe_analyzer import EnhancedMultiTimeframeAnalyzer
@@ -94,7 +95,7 @@ class UltimateCryptoAnalyzer:
                 'confidence_boost_expected': '+60%',
                 'data_completeness': '80%',  # Up from 20% original
                 'enhancements': [
-                    'Multi-Timeframe Data (Daily/4H/1H/15M)',
+                    'Multi-Timeframe Data (All Configured Periods)',
                     'Volume Profile (VAP, POC, Value Area)', 
                     'Enhanced Indicators (Stoch RSI, ADX, ATR, VWAP)',
                     'Market Structure (Swings, Fibonacci, Pivots)'
@@ -124,7 +125,8 @@ class UltimateCryptoAnalyzer:
                 
                 # Data integrity check for timeframes
                 timeframe_data = mtf_analysis.get('timeframe_data', {})
-                expected_timeframes = ['1d', '4h', '1h', '15m']
+                # Get expected timeframes from the analyzer's actual configuration
+                expected_timeframes = list(self.multi_timeframe_analyzer.timeframes.keys())
                 crypto_logger.log_data_integrity_check(
                     "timeframe_data", 
                     expected_timeframes, 
@@ -202,9 +204,9 @@ class UltimateCryptoAnalyzer:
             ultimate_analysis['enhanced_trading_signals'] = trading_signals
             crypto_logger.log_data_checkpoint("enhanced_trading_signals", trading_signals)
             
-            # 5. Professional AI Prompt (Enhanced)
-            logger.info("🤖 Creating enhanced AI prompt...")
-            ai_prompt = self._create_enhanced_ai_prompt(ultimate_analysis)
+            # 5. Professional AI Prompt (Complete)
+            logger.info("🤖 Creating COMPLETE AI prompt...")
+            ai_prompt = generate_complete_ultimate_prompt(symbol, ultimate_analysis)
             ultimate_analysis['enhanced_ai_prompt'] = ai_prompt
             
             # Save processed analysis data
@@ -217,8 +219,8 @@ class UltimateCryptoAnalyzer:
             except Exception as e:
                 crypto_logger.log_file_operation("SAVE", str(processed_data_file), False, error=str(e))
             
-            # Save AI prompt separately for LLM processing
-            prompt_file = self.prompts_dir / f"ultimate_prompt_{symbol.replace('/', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            # Save COMPLETE AI prompt separately for LLM processing
+            prompt_file = self.prompts_dir / f"ultimate_prompt_COMPLETE_{symbol.replace('/', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
             try:
                 with open(prompt_file, 'w', encoding='utf-8') as f:
                     f.write(ai_prompt)
@@ -279,7 +281,10 @@ class UltimateCryptoAnalyzer:
         # Multi-timeframe score
         if 'multi_timeframe_analysis' in analysis and 'error' not in analysis['multi_timeframe_analysis']:
             mtf_data = analysis['multi_timeframe_analysis']
-            scores['multi_timeframe_score'] = mtf_data.get('confluence_score', 0)
+            # Get confluence score from nested structure
+            confluence_analysis = mtf_data.get('confluence_analysis', {})
+            overall_confluence = confluence_analysis.get('overall_confluence', {})
+            scores['multi_timeframe_score'] = overall_confluence.get('confluence_score', 0)
         
         # Volume profile score
         if 'volume_profile_analysis' in analysis and 'error' not in analysis['volume_profile_analysis']:
@@ -319,21 +324,23 @@ class UltimateCryptoAnalyzer:
                 # Calculate trend based on RSI and MACD
                 rsi = indicators.get('rsi', 50)
                 macd_signal = indicators.get('macd_signal', 0)
-                macd_line = indicators.get('macd_line', 0)
+                macd_line = indicators.get('macd', 0)  # Fixed: use 'macd' not 'macd_line'
+                
+                # Technical signal strength (bullish or bearish)
+                signal_strength = 0
                 
                 # Bullish conditions
-                is_bullish = False
-                is_strong = False
-                
                 if rsi > 60 and macd_line > macd_signal:
-                    is_bullish = True
-                    if rsi > 70 and (macd_line - macd_signal) > 0.1:
-                        is_strong = True
+                    signal_strength = 2 if (rsi > 70 and (macd_line - macd_signal) > 0.1) else 1
                 elif rsi > 50 and macd_line > macd_signal and (macd_line - macd_signal) > 0.05:
-                    is_bullish = True
+                    signal_strength = 1
+                # Bearish conditions  
+                elif rsi < 40 and macd_line < macd_signal:
+                    signal_strength = 2 if (rsi < 30 and (macd_signal - macd_line) > 0.1) else 1
+                elif rsi < 50 and macd_line < macd_signal and (macd_signal - macd_line) > 0.05:
+                    signal_strength = 1
                 
-                if is_bullish:
-                    bullish_timeframes += 2 if is_strong else 1
+                bullish_timeframes += signal_strength
             
             if total_timeframes > 0:
                 scores['technical_score'] = min(100, (bullish_timeframes / (total_timeframes * 2)) * 100)
@@ -471,7 +478,7 @@ This analysis incorporates the following enhancements based on professional AI f
 
 ### ✅ TIER 1 ENHANCEMENTS (Game Changers)
 1. **Multi-Timeframe Context** (+25% confidence boost)
-   - Daily, 4H, 1H, and 15M timeframe analysis
+   - Multi-timeframe analysis across all configured periods
    - Confluence scoring across timeframes
    - Trend alignment detection
 
