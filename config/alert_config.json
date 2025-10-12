@@ -1,0 +1,202 @@
+{
+  "alert_rules": [
+    {
+      "id": "strong_confluence_bullish",
+      "name": "Strong Bullish Confluence",
+      "alert_type": "confluence_signal",
+      "severity": "high",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": null,
+      "thresholds": {
+        "confluence_score": 75,
+        "trend_alignment": 80
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "Multiple timeframes showing strong bullish confluence",
+      "created_at": "2025-10-12T00:09:39.116797",
+      "last_triggered": ""
+    },
+    {
+      "id": "strong_confluence_bearish",
+      "name": "Strong Bearish Confluence",
+      "alert_type": "confluence_signal",
+      "severity": "high",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": null,
+      "thresholds": {
+        "confluence_score": 75,
+        "trend_alignment": 80
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "Multiple timeframes showing strong bearish confluence",
+      "created_at": "2025-10-12T00:09:39.116802",
+      "last_triggered": "2025-10-12T01:02:35.268536"
+    },
+    {
+      "id": "rsi_overbought_extreme",
+      "name": "RSI Extremely Overbought",
+      "alert_type": "threshold_breach",
+      "severity": "medium",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": {
+        "rsi": "required"
+      },
+      "thresholds": {
+        "rsi_min": 80
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "RSI above 80 indicating potential reversal",
+      "created_at": "2025-10-12T00:09:39.116804",
+      "last_triggered": ""
+    },
+    {
+      "id": "rsi_oversold_extreme",
+      "name": "RSI Extremely Oversold",
+      "alert_type": "threshold_breach",
+      "severity": "medium",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": {
+        "rsi": "required"
+      },
+      "thresholds": {
+        "rsi_max": 20
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "RSI below 20 indicating potential bounce",
+      "created_at": "2025-10-12T00:09:39.116805",
+      "last_triggered": ""
+    },
+    {
+      "id": "volume_spike_high",
+      "name": "High Volume Spike",
+      "alert_type": "volume_anomaly",
+      "severity": "medium",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": null,
+      "thresholds": {
+        "volume_ratio_min": 3.0
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "Volume 3x above average - institutional activity",
+      "created_at": "2025-10-12T00:09:39.116805",
+      "last_triggered": ""
+    },
+    {
+      "id": "bollinger_squeeze",
+      "name": "Bollinger Band Squeeze",
+      "alert_type": "pattern_formation",
+      "severity": "medium",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": {
+        "bollinger_bands": "required"
+      },
+      "thresholds": {
+        "bb_width_max": 0.05
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "Bollinger Bands squeezing - volatility expansion expected",
+      "created_at": "2025-10-12T00:09:39.116806",
+      "last_triggered": ""
+    },
+    {
+      "id": "support_break",
+      "name": "Support Level Break",
+      "alert_type": "support_resistance",
+      "severity": "high",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": null,
+      "thresholds": {
+        "support_break": true
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "Price breaking below key support level",
+      "created_at": "2025-10-12T00:09:39.116807",
+      "last_triggered": "2025-10-12T01:02:35.271511"
+    },
+    {
+      "id": "resistance_break",
+      "name": "Resistance Level Break",
+      "alert_type": "support_resistance",
+      "severity": "high",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": null,
+      "thresholds": {
+        "resistance_break": true
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "Price breaking above key resistance level",
+      "created_at": "2025-10-12T00:09:39.116807",
+      "last_triggered": "2025-10-12T01:04:40.453363"
+    },
+    {
+      "id": "trend_reversal",
+      "name": "Trend Reversal Signal",
+      "alert_type": "trend_change",
+      "severity": "high",
+      "enabled": true,
+      "symbol": null,
+      "timeframes": null,
+      "indicators": null,
+      "thresholds": {
+        "trend_change": true,
+        "confirmation_strength": 60
+      },
+      "email_enabled": true,
+      "webhook_enabled": false,
+      "desktop_enabled": true,
+      "cooldown_minutes": 15,
+      "max_daily_alerts": 10,
+      "description": "Multiple timeframes confirming trend reversal",
+      "created_at": "2025-10-12T00:09:39.116808",
+      "last_triggered": "2025-10-12T01:04:40.454892"
+    }
+  ]
+}

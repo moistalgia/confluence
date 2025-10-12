@@ -1,0 +1,124 @@
+{
+  "version": "2.0.0",
+  "profile_name": "default",
+  "indicators": {
+    "rsi_period": 30,
+    "rsi_overbought": 70.0,
+    "rsi_oversold": 30.0,
+    "macd_fast": 8,
+    "macd_slow": 21,
+    "macd_signal": 9,
+    "bb_period": 20,
+    "bb_std": 2.0,
+    "bb_squeeze_threshold": 0.1,
+    "sma_short": 10,
+    "sma_long": 50,
+    "ema_period": 21,
+    "atr_period": 14,
+    "atr_multiplier": 2.0,
+    "adx_period": 14,
+    "adx_threshold": 25.0,
+    "stoch_k_period": 14,
+    "stoch_d_period": 3,
+    "stoch_overbought": 80.0,
+    "stoch_oversold": 20.0,
+    "vp_bins": 50,
+    "vp_value_area_percentage": 70.0
+  },
+  "exchange": {
+    "exchange_id": "kraken",
+    "enable_rate_limit": true,
+    "timeout": 20000,
+    "rate_limit": 1000,
+    "sandbox_mode": false,
+    "api_key": "",
+    "api_secret": ""
+  },
+  "performance": {
+    "enable_caching": false,
+    "cache_dir": "cache/crypto_analyzer",
+    "ohlcv_cache_ttl": 300,
+    "indicators_cache_ttl": 60,
+    "max_cache_size": 100,
+    "parallel_processing": true,
+    "max_workers": 8,
+    "timeout_per_timeframe": 60
+  },
+  "analysis": {
+    "min_data_points": 50,
+    "data_quality_threshold": 0.8,
+    "confluence_threshold": 0.6,
+    "signal_strength_threshold": 0.7,
+    "risk_free_rate": 0.05,
+    "max_position_size": 0.1,
+    "stop_loss_atr_multiple": 2.0,
+    "take_profit_ratio": 2.0,
+    "swing_strength": 5,
+    "structure_break_threshold": 0.02,
+    "trend_strength_period": 20
+  },
+  "output": {
+    "output_dir": "output/ultimate_analysis",
+    "save_raw_data": true,
+    "generate_charts": false,
+    "chart_format": "png",
+    "use_ascii_formatting": true,
+    "include_performance_metrics": true,
+    "detailed_logging": true,
+    "log_level": "INFO"
+  },
+  "timeframes": {
+    "1w": {
+      "enabled": true,
+      "weight": 0.35,
+      "periods": 100,
+      "priority": 1,
+      "indicators_enabled": [
+        "rsi",
+        "macd",
+        "bollinger_bands",
+        "atr",
+        "adx"
+      ]
+    },
+    "1d": {
+      "enabled": true,
+      "weight": 0.4,
+      "periods": 200,
+      "priority": 1,
+      "indicators_enabled": [
+        "rsi",
+        "macd",
+        "bollinger_bands",
+        "atr",
+        "adx",
+        "stochastic",
+        "volume_profile"
+      ]
+    },
+    "4h": {
+      "enabled": true,
+      "weight": 0.2,
+      "periods": 300,
+      "priority": 2,
+      "indicators_enabled": [
+        "rsi",
+        "macd",
+        "bollinger_bands",
+        "atr",
+        "stochastic"
+      ]
+    },
+    "1h": {
+      "enabled": true,
+      "weight": 0.05,
+      "periods": 168,
+      "priority": 3,
+      "indicators_enabled": [
+        "rsi",
+        "macd",
+        "bollinger_bands"
+      ]
+    }
+  }
+}

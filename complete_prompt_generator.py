@@ -92,6 +92,10 @@ Key improvements implemented:
             trend = indicators.get('trend', 'UNKNOWN')
             rsi = indicators.get('rsi', 0)
             
+            # Ensure RSI is a valid number
+            if rsi is None or not isinstance(rsi, (int, float)):
+                rsi = 0
+            
             # Determine momentum strength from RSI
             if rsi > 60:
                 momentum = 'STRONG_BULLISH'
@@ -109,35 +113,95 @@ Key improvements implemented:
             vwap_signal = indicators.get('vwap_signal', 'UNKNOWN')
             vwap_distance_percent = indicators.get('vwap_distance_percent', 0)
             
+            # Ensure VWAP values are not None
+            vwap = vwap if vwap is not None else 0
+            vwap_distance_percent = vwap_distance_percent if vwap_distance_percent is not None else 0
+            
             prompt += f"""
 - **{tf_name.upper()}**: {trend} | Momentum: {momentum} (RSI: {rsi:.1f})"""
             
-            # Add comprehensive indicators for each timeframe including VWAP
+            # Add comprehensive indicators for each timeframe - ONLY show valid data
             if indicators:
-                # Core momentum indicators
+                prompt += f"""
+
+  **Technical Indicators**:"""
+                
+                # RSI (always show if valid)
+                if rsi > 0 and rsi <= 100:
+                    rsi_status = '(EXTREME OVERSOLD)' if rsi < 25 else '(OVERSOLD)' if rsi < 30 else '(OVERBOUGHT)' if rsi > 70 else '(STRONG BULL)' if rsi > 60 else '(NEUTRAL)'
+                    prompt += f"""
+  - **RSI**: {rsi:.1f} {rsi_status}"""
+                
+                # MACD (only show if we have meaningful values)
                 macd = indicators.get('macd', 0)
                 macd_signal_val = indicators.get('macd_signal', 0)
                 macd_hist = indicators.get('macd_histogram', 0)
+                
+                if (macd is not None and macd != 0) or (macd_signal_val is not None and macd_signal_val != 0):
+                    macd = macd if macd is not None else 0
+                    macd_signal_val = macd_signal_val if macd_signal_val is not None else 0
+                    macd_hist = macd_hist if macd_hist is not None else 0
+                    
+                    macd_status = '(BULLISH DIV)' if macd_hist > 0 and macd < macd_signal_val else '(BEARISH)' if macd < macd_signal_val else '(BULLISH)'
+                    prompt += f"""
+  - **MACD**: Line: {macd:.2f} | Signal: {macd_signal_val:.2f} | Histogram: {macd_hist:.2f} {macd_status}"""
+                
+                # Stochastic (only show if not 0.0 or 50.0 default values)
                 stoch = indicators.get('stoch', 0)
                 stoch_signal_val = indicators.get('stoch_signal', 0)
+                
+                if stoch is not None and stoch != 0 and stoch != 50 and stoch_signal_val is not None and stoch_signal_val != 0 and stoch_signal_val != 50:
+                    stoch_status = '(EXTREME OVERSOLD)' if stoch < 20 else '(OVERSOLD)' if stoch < 30 else '(OVERBOUGHT)' if stoch > 80 else ''
+                    prompt += f"""
+  - **Stochastic**: {stoch:.1f} / {stoch_signal_val:.1f} {stoch_status}"""
+                
+                # ADX (only show if meaningful value)
                 adx = indicators.get('adx', indicators.get('ADX', 0))
-                
-                rsi_status = '(EXTREME OVERSOLD)' if rsi < 25 else '(OVERSOLD)' if rsi < 30 else '(OVERBOUGHT)' if rsi > 70 else '(STRONG BULL)' if rsi > 60 else '(NEUTRAL)'
-                macd_status = '(BULLISH DIV)' if macd_hist > 0 and macd < macd_signal_val else '(BEARISH)' if macd < macd_signal_val else '(BULLISH)'
-                stoch_status = '(EXTREME OVERSOLD)' if stoch < 20 else '(OVERSOLD)' if stoch < 30 else '(OVERBOUGHT)' if stoch > 80 else ''
-                adx_status = '(EXTREME TREND)' if adx > 60 else '(STRONG TREND)' if adx > 40 else '(MODERATE TREND)' if adx > 25 else '(WEAK/NO TREND)'
-                
-                prompt += f"""
-  - **RSI**: {rsi:.1f} {rsi_status}
-  - **MACD**: Line: {macd:.2f} | Signal: {macd_signal_val:.2f} | Histogram: {macd_hist:.2f} {macd_status}
-  - **Stochastic**: {stoch:.1f} / {stoch_signal_val:.1f} {stoch_status}
+                if adx is not None and adx > 0:
+                    adx_status = '(EXTREME TREND)' if adx > 60 else '(STRONG TREND)' if adx > 40 else '(MODERATE TREND)' if adx > 25 else '(WEAK/NO TREND)'
+                    prompt += f"""
   - **ADX**: {adx:.1f} {adx_status}"""
+                
+                # New Advanced Indicators
+                # Williams %R
+                williams_r = indicators.get('williams_r', None)
+                if williams_r is not None and williams_r != -50:  # -50 is our default neutral value
+                    wr_status = '(OVERBOUGHT)' if williams_r > -20 else '(OVERSOLD)' if williams_r < -80 else '(NEUTRAL)'
+                    prompt += f"""
+  - **Williams %R**: {williams_r:.1f} {wr_status}"""
+                
+                # CCI
+                cci = indicators.get('cci', None)
+                if cci is not None and abs(cci) > 10:  # Only show if meaningful deviation from 0
+                    cci_status = '(EXTREME OVERBOUGHT)' if cci > 200 else '(OVERBOUGHT)' if cci > 100 else '(EXTREME OVERSOLD)' if cci < -200 else '(OVERSOLD)' if cci < -100 else '(NEUTRAL)'
+                    prompt += f"""
+  - **CCI**: {cci:.1f} {cci_status}"""
+                
+                # Parabolic SAR
+                psar_signal = indicators.get('psar_signal', None)
+                psar_value = indicators.get('psar', None)
+                if psar_signal and psar_signal != 'NEUTRAL' and psar_value:
+                    prompt += f"""
+  - **Parabolic SAR**: ${psar_value:.2f} ({psar_signal})"""
+                
+                # Ichimoku (if available)
+                ichimoku_signal = indicators.get('ichimoku_signal', None)
+                ichimoku_position = indicators.get('ichimoku_position', None)
+                if ichimoku_signal and ichimoku_signal != 'NEUTRAL' and ichimoku_position and ichimoku_position != 'INSUFFICIENT_DATA':
+                    prompt += f"""
+  - **Ichimoku**: {ichimoku_position} | Signal: {ichimoku_signal}"""
                 
                 # Moving averages with price relationships
                 sma20 = indicators.get('sma_20', 0)
                 sma50 = indicators.get('sma_50', 0) 
                 sma200 = indicators.get('sma_200', 0)
                 current_price_ind = indicators.get('price', 0)
+                
+                # Ensure SMA values are not None
+                sma20 = sma20 if sma20 is not None else 0
+                sma50 = sma50 if sma50 is not None else 0
+                sma200 = sma200 if sma200 is not None else 0
+                current_price_ind = current_price_ind if current_price_ind is not None else 0
                 
                 if sma20 > 0 and current_price_ind > 0:
                     sma20_dist = ((current_price_ind - sma20) / sma20) * 100
@@ -155,26 +219,37 @@ Key improvements implemented:
                     prompt += f"""
   - **SMA200**: ${sma200:.2f} (price {sma200_dist:+.1f}% {'above' if sma200_dist > 0 else 'below'}) ← {bull_bear}"""
                 
-                # Bollinger Bands analysis
+                # Enhanced Bollinger Bands analysis with squeeze detection
                 bb_upper = indicators.get('bb_upper', 0)
                 bb_middle = indicators.get('bb_middle', 0)
                 bb_lower = indicators.get('bb_lower', 0)
                 bb_width = indicators.get('bb_width', 0)
+                bb_zone = indicators.get('bb_zone', 'UNKNOWN')
+                bb_signal = indicators.get('bb_signal', 'UNKNOWN')
+                squeeze_detected = indicators.get('squeeze_detected', False)
+                squeeze_intensity = indicators.get('squeeze_intensity', 'NORMAL')
+                bb_width_percentile = indicators.get('bb_width_percentile_50', 50)
+                bb_trend_strength = indicators.get('bb_trend_strength', 'UNKNOWN')
                 
-                if bb_upper > 0 and current_price_ind > 0:
-                    if current_price_ind > bb_upper:
-                        bb_position = "ABOVE UPPER (Extreme Overbought)"
-                    elif current_price_ind < bb_lower:
-                        bb_position = "BELOW LOWER (Extreme Oversold)"
-                    elif current_price_ind > bb_middle:
-                        bb_position = "ABOVE MIDDLE (Bullish)"
-                    else:
-                        bb_position = "BELOW MIDDLE (Bearish)"
+                # Ensure BB values are not None
+                bb_upper = bb_upper if bb_upper is not None else 0
+                bb_middle = bb_middle if bb_middle is not None else 0
+                bb_lower = bb_lower if bb_lower is not None else 0
+                bb_width = bb_width if bb_width is not None else 0
+                bb_width_percentile = bb_width_percentile if bb_width_percentile is not None else 50
+                
+                if bb_upper > 0:
+                    squeeze_status = ""
+                    if squeeze_detected:
+                        squeeze_status = f" 🔥 SQUEEZE: {squeeze_intensity} (Width: {bb_width_percentile:.0f}th percentile)"
                     
-                    vol_status = '(HIGH VOLATILITY)' if bb_width > 20 else '(NORMAL)' if bb_width > 10 else '(LOW VOLATILITY/SQUEEZE)'
+                    expansion_status = ""
+                    if bb_trend_strength in ['EXPANDING', 'CONTRACTING']:
+                        expansion_status = f" | Bands: {bb_trend_strength}"
+                    
                     prompt += f"""
   - **Bollinger Bands**: Upper: ${bb_upper:.2f} | Middle: ${bb_middle:.2f} | Lower: ${bb_lower:.2f}
-  - **BB Position**: {bb_position} | Width: {bb_width:.1f}% {vol_status}"""
+  - **BB Analysis**: Zone: {bb_zone} | Signal: {bb_signal} | Width: {bb_width:.1f}%{squeeze_status}{expansion_status}"""
                 
                 # VWAP analysis (enhanced)
                 if vwap > 0:
@@ -189,6 +264,66 @@ Key improvements implemented:
                     if vwap_upper_1 > 0:
                         prompt += f"""
   - **VWAP Bands**: ${vwap_lower_1:.2f} - ${vwap_upper_1:.2f}"""
+                
+                # Enhanced Volume Profile Analysis
+                poc_price = indicators.get('poc_price', 0)
+                va_high = indicators.get('va_high', 0)
+                va_low = indicators.get('va_low', 0)
+                va_position = indicators.get('va_position', 'UNKNOWN')
+                va_signal = indicators.get('va_signal', 'UNKNOWN')
+                hvn_count = indicators.get('hvn_count', 0)
+                volume_distribution = indicators.get('volume_distribution', 'UNKNOWN')
+                market_balance = indicators.get('market_balance', 'UNKNOWN')
+                poc_distance = indicators.get('poc_distance', 0)
+                
+                if poc_price > 0:
+                    balance_indicator = '⚖️ BALANCED' if market_balance == 'BALANCED' else '⬆️ UPPER HEAVY' if market_balance == 'UPPER_HEAVY' else '⬇️ LOWER HEAVY'
+                    
+                    prompt += f"""
+  - **Volume Profile**: POC: ${poc_price:.2f} ({poc_distance:+.1f}%) | VA: {va_position}
+  - **Value Area**: ${va_low:.2f} - ${va_high:.2f} | Signal: {va_signal}
+  - **Distribution**: {volume_distribution} | HVN Levels: {hvn_count} | Balance: {balance_indicator}"""
+                
+                # Market Structure Analysis
+                market_structure = indicators.get('market_structure', 'UNKNOWN')
+                structure_signal = indicators.get('structure_signal', 'UNKNOWN')
+                swing_highs_count = indicators.get('swing_highs_count', 0)
+                swing_lows_count = indicators.get('swing_lows_count', 0)
+                trend_change_signal = indicators.get('trend_change_signal', 'UNKNOWN')
+                break_count = indicators.get('break_count', 0)
+                
+                structure_alert = ""
+                if trend_change_signal not in ['TREND_CONTINUATION', 'UNKNOWN']:
+                    structure_alert = f" 🚨 {trend_change_signal}"
+                
+                break_info = ""
+                if break_count > 0:
+                    break_info = f" | Breaks: {break_count}"
+                
+                prompt += f"""
+  - **Market Structure**: {market_structure} | Signal: {structure_signal}{structure_alert}
+  - **Swing Points**: Highs: {swing_highs_count} | Lows: {swing_lows_count}{break_info}"""
+                
+                # Momentum Divergence Analysis
+                divergence_signal = indicators.get('divergence_signal', 'UNKNOWN')
+                divergence_strength = indicators.get('divergence_strength', 'UNKNOWN')
+                bullish_div_count = indicators.get('bullish_div_count', 0)
+                bearish_div_count = indicators.get('bearish_div_count', 0)
+                recent_divergence = indicators.get('recent_divergence', False)
+                confirmation_count = indicators.get('confirmation_count', 0)
+                
+                divergence_alert = ""
+                if recent_divergence:
+                    recent_type = indicators.get('recent_divergence_type', 'UNKNOWN')
+                    divergence_alert = f" 🔔 Recent: {recent_type}"
+                
+                confirmation_info = ""
+                if confirmation_count > 0:
+                    confirmation_info = f" | Confirmed: {confirmation_count}x"
+                
+                if divergence_signal != 'UNKNOWN':
+                    prompt += f"""
+  - **Divergence**: {divergence_signal} ({divergence_strength}) | Bullish: {bullish_div_count} | Bearish: {bearish_div_count}{divergence_alert}{confirmation_info}"""
                 
                 # Volume and volatility
                 atr = indicators.get('atr', 0)
@@ -429,9 +564,12 @@ Base your recommendations on this comprehensive dataset including ALL volume pro
     return prompt
 
 def main():
-    print("COMPLETE Ultimate Prompt Generator")
-    print("Including ALL analysis data - no data left behind!")
-    print("=" * 70)
+    print("+" + "=" * 68 + "+")
+    print("|" + " " * 68 + "|")
+    print("|" + " COMPLETE Ultimate Prompt Generator ".center(68) + "|")
+    print("|" + " Including ALL analysis data - no data left behind! ".center(68) + "|")
+    print("|" + " " * 68 + "|")
+    print("+" + "=" * 68 + "+")
     
     # Process existing analysis files
     processed_dir = Path("output/ultimate_analysis/processed_data")
@@ -459,15 +597,16 @@ def main():
         with open(prompt_path, 'w', encoding='utf-8') as f:
             f.write(prompt)
         
-        print(f"Generated COMPLETE prompt: {prompt_filename}")
+        print(f"✅ Generated COMPLETE prompt: {prompt_filename}")
         
         # Calculate data inclusion
         prompt_lines = len(prompt.split('\n'))
-        print(f"   Prompt size: {prompt_lines} lines (vs ~100 lines for basic prompt)")
+        print(f"   📊 Prompt size: {prompt_lines} lines (vs ~100 lines for basic prompt)")
     
-    print()
-    print("COMPLETE prompts ready for LLM processing!")
-    print("Now includes 100% of available analysis data!")
+    print("\n" + "─" * 70)
+    print("🚀 COMPLETE prompts ready for LLM processing!")
+    print("💯 Now includes 100% of available analysis data!")
+    print("─" * 70)
 
 if __name__ == "__main__":
     main()
