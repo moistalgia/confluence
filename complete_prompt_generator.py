@@ -31,6 +31,28 @@ def generate_complete_ultimate_prompt(symbol, analysis):
     if not current_price or current_price <= 0:
         raise ValueError(f"INVALID DATA: current_price is {current_price}, expected positive number")
 
+    # Track data availability for transparency
+    available_timeframes = []
+    missing_timeframes = []
+    missing_data_notes = []
+    
+    # Check timeframe data availability
+    mtf_data = analysis.get('multi_timeframe_analysis', {})
+    expected_timeframes = ['1w', '1d', '4h', '1h']
+    
+    for tf in expected_timeframes:
+        tf_data = mtf_data.get('timeframe_data', {}).get(tf, {})
+        if 'indicators' in tf_data and tf_data['indicators']:
+            available_timeframes.append(tf.upper())
+        else:
+            missing_timeframes.append(tf.upper())
+            if tf == '1w':
+                missing_data_notes.append(f"• {tf.upper()}: Insufficient historical data (common for newer assets)")
+            elif tf == '1d':
+                missing_data_notes.append(f"• {tf.upper()}: Limited daily data available")
+            else:
+                missing_data_notes.append(f"• {tf.upper()}: Timeframe analysis failed")
+
     prompt = f"""# ULTIMATE CRYPTOCURRENCY TRADING ANALYSIS - COMPLETE DATA SET
 
 ## Analysis Overview
@@ -40,6 +62,13 @@ def generate_complete_ultimate_prompt(symbol, analysis):
 - **Confidence Level**: {ultimate_score.get('confidence_level', 'UNKNOWN')}
 - **Primary Bias**: {signals.get('primary_bias', 'NEUTRAL')}
 - **Current Price**: ${current_price:,.2f}
+
+## Data Availability Status
+- **Available Timeframes**: {', '.join(available_timeframes) if available_timeframes else 'None'}
+- **Missing Timeframes**: {', '.join(missing_timeframes) if missing_timeframes else 'None'}
+{chr(10).join(missing_data_notes) if missing_data_notes else '• All timeframes available'}
+
+**⚠️ Analysis Note**: This analysis is based on {len(available_timeframes)}/4 timeframes. Missing timeframes may limit confluence analysis accuracy.
 
 ## AI Feedback Implementation Status
 This analysis incorporates the following enhancements based on professional AI feedback:
@@ -102,9 +131,10 @@ Key improvements implemented:
                 critical_alerts.append(f"🎯 RESISTANCE ZONE ({tf_name.upper()}): Only {distance_to_swing_high:.1f}% below major swing high - Breakout potential!")
                 extreme_conditions_detected = True
             
-            # Check for extreme RSI conditions - FAIL FAST if missing
+            # Check for extreme RSI conditions - Skip if timeframe failed (insufficient data)
             if 'rsi' not in indicators:
-                raise ValueError(f"MISSING DATA: RSI not found in {tf_name} indicators")
+                print(f"⚠️  PROMPT GENERATOR: Skipping {tf_name.upper()} - missing RSI data")
+                continue  # Skip this timeframe - insufficient data (common for new coins)
             rsi = indicators['rsi']
             if rsi < 20:
                 critical_alerts.append(f"🔻 EXTREME OVERSOLD ({tf_name.upper()}): RSI {rsi:.1f} - Bounce setup likely!")
@@ -154,13 +184,15 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
             trend_info = individual_trends.get(tf_name, {})
             trend = trend_info.get('trend_direction', 'UNKNOWN')
             
-            # Extract indicators from timeframe data - FAIL FAST if missing
+            # Extract indicators from timeframe data - Skip if missing (insufficient data)
             if 'indicators' not in tf_data:
-                raise ValueError(f"MISSING DATA: indicators section not found in {tf_name} timeframe data")
+                print(f"⚠️  PROMPT GENERATOR: Skipping {tf_name.upper()} - no indicators data (insufficient historical data)")
+                continue  # Skip this timeframe - failed due to insufficient data (common for new coins)
             
             indicators = tf_data['indicators']
             if 'rsi' not in indicators:
-                raise ValueError(f"MISSING DATA: RSI not found in {tf_name} indicators")
+                print(f"⚠️  PROMPT GENERATOR: Skipping {tf_name.upper()} momentum analysis - missing RSI data")
+                continue  # Skip this timeframe - insufficient data (common for new coins)
             
             rsi = indicators['rsi']
             if rsi is None or not isinstance(rsi, (int, float)):
@@ -178,13 +210,9 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
             else:
                 momentum = 'NEUTRAL'
             
-            # Add VWAP information - FAIL FAST if missing
-            if 'vwap' not in indicators:
-                raise ValueError(f"MISSING DATA: VWAP not found in {tf_name} indicators")
-            if 'vwap_signal' not in indicators:
-                raise ValueError(f"MISSING DATA: vwap_signal not found in {tf_name} indicators")
-            if 'vwap_distance_percent' not in indicators:
-                raise ValueError(f"MISSING DATA: vwap_distance_percent not found in {tf_name} indicators")
+            # Add VWAP information - Skip if missing (insufficient data)
+            if 'vwap' not in indicators or 'vwap_signal' not in indicators or 'vwap_distance_percent' not in indicators:
+                continue  # Skip this timeframe - missing VWAP data
             
             vwap = indicators['vwap']
             vwap_signal = indicators['vwap_signal']
@@ -206,12 +234,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
   - **RSI**: {rsi:.1f} {rsi_status}"""
                 
                 # MACD - FAIL FAST if missing
-                if 'macd' not in indicators:
-                    raise ValueError(f"MISSING DATA: MACD not found in {tf_name} indicators")
-                if 'macd_signal' not in indicators:
-                    raise ValueError(f"MISSING DATA: macd_signal not found in {tf_name} indicators")
-                if 'macd_histogram' not in indicators:
-                    raise ValueError(f"MISSING DATA: macd_histogram not found in {tf_name} indicators")
+                if 'macd' not in indicators or 'macd_signal' not in indicators or 'macd_histogram' not in indicators:
+                    continue  # Skip this timeframe - missing MACD data
                 
                 macd = indicators['macd']
                 macd_signal_val = indicators['macd_signal']
@@ -221,11 +245,9 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 prompt += f"""
   - **MACD**: Line: {macd:.2f} | Signal: {macd_signal_val:.2f} | Histogram: {macd_hist:.2f} {macd_status}"""
                 
-                # Stochastic - FAIL FAST if missing
-                if 'stoch' not in indicators:
-                    raise ValueError(f"MISSING DATA: Stochastic not found in {tf_name} indicators")
-                if 'stoch_signal' not in indicators:
-                    raise ValueError(f"MISSING DATA: stoch_signal not found in {tf_name} indicators")
+                # Stochastic - Skip if missing (insufficient data)
+                if 'stoch' not in indicators or 'stoch_signal' not in indicators:
+                    continue  # Skip this timeframe - missing Stochastic data
                 
                 stoch = indicators['stoch']
                 stoch_signal_val = indicators['stoch_signal']
@@ -736,7 +758,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
             if trend_alignment:
                 trends = trend_alignment.get('trends', {})
                 dominant_trend = trend_alignment.get('dominant_trend', 'MIXED')
-                alignment_strength = trend_alignment.get('alignment_strength', 0)
+                # Fix: Use trend_reliability instead of alignment_strength
+                alignment_strength = trend_alignment.get('trend_reliability', 0)
                 prompt += f"""
 - **Trend Alignment**: {dominant_trend} (Strength: {alignment_strength:.1%})
   - Weekly: {trends.get('1w', 'N/A')}
@@ -758,7 +781,8 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
             volume_conf = confluence_data.get('volume_confirmation', {})
             if volume_conf:
                 avg_volume = volume_conf.get('average_volume_ratio', 1)
-                volume_strength = volume_conf.get('volume_strength', 'LOW')
+                # Fix: Use correct field name from analyzer
+                volume_strength = volume_conf.get('volume_confirmation', 'LOW_VOLUME')
                 prompt += f"""
 - **Volume Confirmation**: {volume_strength} (Ratio: {avg_volume:.2f}x)"""
     
@@ -983,6 +1007,25 @@ Position sizing: REDUCE to 25-50% normal size until volatility subsides."""
                 prompt += f"""
 - {component.replace('_', ' ').title()}: {weight:.0%} weight"""
     
+    # Add DCA Analysis display
+    dca_analysis = analysis.get('dca_analysis', {})
+    if dca_analysis:
+        dca_score = dca_analysis.get('dca_score', 0)
+        recommendation = dca_analysis.get('recommendation', 'N/A')
+        frequency = dca_analysis.get('suggested_frequency', 'N/A')
+        position_size = dca_analysis.get('position_size', 'N/A')
+        risk_level = dca_analysis.get('risk_level', 'N/A')
+        reasoning = dca_analysis.get('reasoning', 'N/A')
+        
+        prompt += f"""
+
+### Dollar Cost Averaging (DCA) Strategy Analysis
+- **DCA Score**: {dca_score}/15 ({recommendation})
+- **Recommended Frequency**: {frequency}
+- **Position Size**: {position_size} of portfolio per entry  
+- **Risk Assessment**: {risk_level}
+- **Strategy Reasoning**: {reasoning}"""
+    
     prompt += """
 
 ## PROFESSIONAL ANALYSIS REQUEST
@@ -1013,7 +1056,23 @@ As a **Senior Institutional Trader** with access to this COMPLETE dataset (100% 
 - Success probability for directional trades
 - Expected holding period for different strategies
 
-### 5. **Comprehensive Monitoring Protocol**
+### 5. **Risk-Adjusted Trading Strategy Framework**
+- Position sizing based on volatility and confluence scores
+- Multi-timeframe entry/exit protocol with risk management
+- Portfolio allocation recommendations (% of total capital)
+- Stop-loss placement using volume profile and technical levels
+- Risk-reward optimization across different market conditions
+
+### 6. **DCA Strategy Calculation & Justification**
+**REQUIRED**: Provide detailed calculation breakdown for the DCA score and explain:
+- How volatility metrics (ATR %, BB squeeze) contribute to the score
+- Impact of confluence uncertainty on DCA timing favorability
+- Volume profile positioning factors in the scoring methodology
+- RSI oversold conditions and their weight in DCA recommendations
+- Market condition factors supporting/opposing systematic accumulation
+- Expected performance scenarios under different market volatility regimes
+
+### 7. **Comprehensive Monitoring Protocol**
 - Key levels to watch for trend continuation/reversal
 - Volume confirmation signals to monitor
 - Timeframe-specific exit triggers
@@ -1022,7 +1081,7 @@ As a **Senior Institutional Trader** with access to this COMPLETE dataset (100% 
 ## Data Quality Statement
 **This analysis uses COMPLETE data with 100% analysis inclusion and 60% improved prediction accuracy vs baseline systems.**
 
-Base your recommendations on this comprehensive dataset including ALL volume profile data, complete multi-timeframe analysis, full trading signals, and detailed scoring methodology."""
+Base your recommendations on this comprehensive dataset including ALL volume profile data, complete multi-timeframe analysis, full trading signals, detailed scoring methodology, and integrated DCA/risk-adjusted strategy framework."""
     
     return prompt
 

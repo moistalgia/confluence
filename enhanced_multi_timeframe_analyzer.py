@@ -2555,13 +2555,15 @@ class EnhancedMultiTimeframeAnalyzer:
         volume_analysis['volume_trends'] = volume_trends
         volume_analysis['volume_weighted_score'] = weighted_volume_score
         
-        # Determine volume confirmation
-        if weighted_volume_score > 1.2:
+        # Determine volume confirmation (fixed thresholds)
+        if weighted_volume_score > 1.5:
             volume_analysis['volume_confirmation'] = 'STRONG_CONFIRMATION'
-        elif weighted_volume_score > 0.9:
-            volume_analysis['volume_confirmation'] = 'CONFIRMATION'
-        else:
+        elif weighted_volume_score > 1.2:
+            volume_analysis['volume_confirmation'] = 'CONFIRMATION' 
+        elif weighted_volume_score > 0.8:
             volume_analysis['volume_confirmation'] = 'WEAK_CONFIRMATION'
+        else:
+            volume_analysis['volume_confirmation'] = 'LOW_VOLUME'
         
         return volume_analysis
     

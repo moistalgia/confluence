@@ -269,7 +269,9 @@ class UltimateCryptoAnalyzer:
             'multi_timeframe_score': 0,
             'volume_profile_score': 0,
             'technical_score': 0,
-            'confluence_bonus': 0
+            'confluence_bonus': 0,
+            'obv_divergence_bonus': 0,
+            'fibonacci_level_bonus': 0
         }
         
         weights = {
@@ -345,28 +347,127 @@ class UltimateCryptoAnalyzer:
             if total_timeframes > 0:
                 scores['technical_score'] = min(100, (bullish_timeframes / (total_timeframes * 2)) * 100)
         
-        # Confluence bonus (when multiple systems agree)
+        # OBV Divergence Bonus (0-10 points for smart money signals)
+        if 'multi_timeframe_analysis' in analysis:
+            mtf_data = analysis['multi_timeframe_analysis']
+            tf_data = mtf_data.get('timeframe_data', {})
+            
+            # Get OBV values across timeframes
+            obv_values = {}
+            for tf_name, tf_info in tf_data.items():
+                if 'indicators' in tf_info:
+                    obv = tf_info['indicators'].get('obv', 0)
+                    obv_values[tf_name] = obv
+            
+            # Detect OBV divergences (accumulation vs distribution)
+            obv_divergence_score = 0
+            if len(obv_values) >= 3:
+                # Check for bullish divergence (longer timeframes positive, shorter negative)
+                weekly_obv = obv_values.get('1w', 0)
+                daily_obv = obv_values.get('1d', 0) 
+                hourly_obv = obv_values.get('4h', obv_values.get('1h', 0))
+                
+                # Bullish divergence: accumulation on longer TF, distribution on shorter TF
+                if weekly_obv > 0 and daily_obv > 0 and hourly_obv < 0:
+                    obv_divergence_score = 8  # Strong bullish divergence
+                elif daily_obv > 0 and hourly_obv < 0:
+                    obv_divergence_score = 5  # Moderate bullish divergence
+                # Bearish divergence: distribution on longer TF, accumulation on shorter TF
+                elif weekly_obv < 0 and daily_obv < 0 and hourly_obv > 0:
+                    obv_divergence_score = -8  # Strong bearish divergence (penalty)
+                elif daily_obv < 0 and hourly_obv > 0:
+                    obv_divergence_score = -5  # Moderate bearish divergence (penalty)
+                
+            scores['obv_divergence_bonus'] = obv_divergence_score
+        
+        # Fibonacci Level Bonus (0-5 points for key level proximity)
+        if 'multi_timeframe_analysis' in analysis and 'volume_profile_analysis' in analysis:
+            try:
+                # Get current price
+                current_price = analysis['volume_profile_analysis']['metadata']['current_price']
+                
+                # Get weekly swing data for Fibonacci calculation
+                mtf_data = analysis['multi_timeframe_analysis']
+                tf_data = mtf_data.get('timeframe_data', {})
+                weekly_data = tf_data.get('1w', {})
+                
+                if 'indicators' in weekly_data:
+                    indicators = weekly_data['indicators']
+                    swing_high = indicators.get('nearest_swing_high', 0)
+                    swing_low = indicators.get('nearest_swing_low', 0)
+                    
+                    if swing_high > swing_low > 0:
+                        # Calculate key Fibonacci levels
+                        swing_range = swing_high - swing_low
+                        fib_618 = swing_low + (swing_range * 0.618)  # Golden ratio
+                        fib_50 = swing_low + (swing_range * 0.5)     # Midpoint
+                        fib_382 = swing_low + (swing_range * 0.382)  # Support
+                        
+                        # Calculate proximity to key levels (within 2%)
+                        proximity_threshold = current_price * 0.02
+                        
+                        if abs(current_price - fib_618) < proximity_threshold:
+                            scores['fibonacci_level_bonus'] = 5  # Golden ratio proximity
+                        elif abs(current_price - fib_50) < proximity_threshold:
+                            scores['fibonacci_level_bonus'] = 3  # Midpoint proximity  
+                        elif abs(current_price - fib_382) < proximity_threshold:
+                            scores['fibonacci_level_bonus'] = 2  # Support level proximity
+                        
+            except (KeyError, TypeError, ZeroDivisionError):
+                # Handle missing data gracefully
+                scores['fibonacci_level_bonus'] = 0
+        
+        # Enhanced Confluence bonus (when multiple systems agree + S/R confluence)
         mtf_score = scores['multi_timeframe_score']
         vp_score = scores['volume_profile_score']
         tech_score = scores['technical_score']
         
-        # Bonus for alignment
+        # Base alignment bonus
         score_alignment = 1 - (abs(mtf_score - vp_score) + abs(vp_score - tech_score) + abs(mtf_score - tech_score)) / 300
-        scores['confluence_bonus'] = max(0, score_alignment * 20)  # Up to 20 point bonus
+        base_confluence = max(0, score_alignment * 15)  # Reduced to 15 to make room for S/R bonus
         
-        # Calculate composite score
+        # S/R Confluence enhancement (0-5 additional points)
+        sr_confluence_bonus = 0
+        if 'multi_timeframe_analysis' in analysis:
+            mtf_data = analysis['multi_timeframe_analysis']
+            confluence_analysis = mtf_data.get('confluence_analysis', {})
+            sr_confluence = confluence_analysis.get('support_resistance_confluence', {})
+            
+            # Check for multi-timeframe S/R confluence zones
+            confluence_zones = sr_confluence.get('confluence_zones', [])
+            if confluence_zones:
+                # Award points based on strongest confluence zone
+                max_confluence_strength = max([zone.get('strength', 0) for zone in confluence_zones], default=0)
+                if max_confluence_strength > 0.8:  # Very strong confluence (4+ timeframes)
+                    sr_confluence_bonus = 5
+                elif max_confluence_strength > 0.6:  # Strong confluence (3+ timeframes)  
+                    sr_confluence_bonus = 3
+                elif max_confluence_strength > 0.4:  # Moderate confluence (2+ timeframes)
+                    sr_confluence_bonus = 2
+        
+        scores['confluence_bonus'] = base_confluence + sr_confluence_bonus  # Up to 20 point bonus total
+        
+        # DCA Timing Analysis (0-15 points based on volatility and entry conditions)
+        dca_score = self._calculate_dca_score(analysis)
+        scores['dca_timing_score'] = dca_score
+        
+        # Calculate composite score with enhanced bonuses
         composite = (
             mtf_score * weights['multi_timeframe'] +
             vp_score * weights['volume_profile'] +
             tech_score * weights['technical'] +
-            scores['confluence_bonus']
+            scores['confluence_bonus'] +
+            scores['obv_divergence_bonus'] +
+            scores['fibonacci_level_bonus'] +
+            (dca_score * 0.1)  # DCA contributes 10% to overall score
         )
         
         return {
             'composite_score': round(min(100, max(0, composite)), 1),
             'component_scores': scores,
             'weights_used': weights,
-            'confidence_level': 'HIGH' if scores['confluence_bonus'] > 10 else 'MODERATE' if scores['confluence_bonus'] > 5 else 'LOW'
+            'confidence_level': 'HIGH' if scores['confluence_bonus'] > 10 else 'MODERATE' if scores['confluence_bonus'] > 5 else 'LOW',
+            'dca_analysis': self._generate_dca_recommendations(analysis, dca_score)
         }
     
     def _generate_enhanced_signals(self, analysis: Dict) -> Dict:
@@ -866,13 +967,136 @@ Base your recommendations on this comprehensive dataset including volume profile
         logger.info(f"🤖 Enhanced AI prompt saved to: {prompt_file}")
         
         return str(prompt_file)
+    
+    def _calculate_dca_score(self, analysis: Dict) -> float:
+        """
+        Calculate DCA (Dollar Cost Averaging) timing score based on market conditions
+        Returns: 0-15 points for DCA timing quality
+        """
+        try:
+            dca_score = 0
+            
+            # Get multi-timeframe data
+            if 'multi_timeframe_analysis' in analysis:
+                mtf_data = analysis['multi_timeframe_analysis']
+                tf_data = mtf_data.get('timeframe_data', {})
+                
+                # Volatility factor (higher volatility = better DCA conditions)
+                volatility_scores = []
+                for tf_name, tf_info in tf_data.items():
+                    if 'indicators' in tf_info:
+                        atr = tf_info['indicators'].get('atr', 0)
+                        bb_squeeze = tf_info['indicators'].get('bb_squeeze', False)
+                        if atr > 0:
+                            # Normalize ATR as % of price
+                            current_price = analysis.get('volume_profile_analysis', {}).get('metadata', {}).get('current_price', 100)
+                            atr_percent = (atr / current_price) * 100
+                            volatility_scores.append(atr_percent)
+                            
+                        # Squeeze conditions favor DCA (low volatility before expansion)
+                        if bb_squeeze:
+                            dca_score += 3
+                
+                # Average volatility assessment
+                if volatility_scores:
+                    avg_volatility = sum(volatility_scores) / len(volatility_scores)
+                    if avg_volatility > 5:  # High volatility (5%+ ATR)
+                        dca_score += 5
+                    elif avg_volatility > 3:  # Moderate volatility
+                        dca_score += 3
+                    elif avg_volatility > 1:  # Low volatility
+                        dca_score += 1
+                
+                # Trend alignment for DCA (lower scores in downtrends = better DCA)
+                if 'confluence_analysis' in mtf_data:
+                    confluence_data = mtf_data['confluence_analysis']
+                    overall_confluence = confluence_data.get('overall_confluence', {})
+                    confluence_score = overall_confluence.get('confluence_score', 50)
+                    
+                    # Lower confluence scores indicate uncertainty = better DCA conditions
+                    if confluence_score < 30:  # High uncertainty
+                        dca_score += 4
+                    elif confluence_score < 45:  # Moderate uncertainty
+                        dca_score += 2
+                    
+                    # Check for oversold conditions across timeframes (better for DCA)
+                    momentum_conf = confluence_data.get('momentum_confluence', {})
+                    avg_rsi = momentum_conf.get('average_rsi', 50)
+                    if avg_rsi < 30:  # Oversold across timeframes
+                        dca_score += 3
+                    elif avg_rsi < 40:  # Moderately oversold
+                        dca_score += 1
+                
+                # Volume profile support (better DCA near value areas)
+                if 'volume_profile_analysis' in analysis:
+                    vp_data = analysis['volume_profile_analysis']
+                    current_price = vp_data.get('metadata', {}).get('current_price', 0)
+                    poc = vp_data.get('point_of_control', {}).get('price', 0)
+                    
+                    if current_price > 0 and poc > 0:
+                        # Distance from POC (Point of Control)
+                        distance_from_poc = abs(current_price - poc) / current_price
+                        if distance_from_poc < 0.02:  # Within 2% of POC
+                            dca_score += 3
+                        elif distance_from_poc < 0.05:  # Within 5% of POC
+                            dca_score += 1
+                            
+            return min(15, max(0, dca_score))
+            
+        except (KeyError, TypeError, ZeroDivisionError):
+            return 0
+    
+    def _generate_dca_recommendations(self, analysis: Dict, dca_score: float) -> Dict:
+        """
+        Generate DCA strategy recommendations based on analysis
+        """
+        try:
+            if dca_score >= 12:
+                recommendation = "EXCELLENT"
+                frequency = "Daily"
+                allocation = "3-5% per entry"
+                reasoning = "High volatility + uncertainty + near value area"
+            elif dca_score >= 8:
+                recommendation = "GOOD"
+                frequency = "Every 2-3 days"
+                allocation = "2-3% per entry"
+                reasoning = "Moderate conditions favor systematic accumulation"
+            elif dca_score >= 4:
+                recommendation = "FAIR"
+                frequency = "Weekly"
+                allocation = "1-2% per entry"
+                reasoning = "Some favorable conditions present"
+            else:
+                recommendation = "POOR"
+                frequency = "Monthly or wait"
+                allocation = "0.5-1% per entry"
+                reasoning = "Unfavorable conditions for DCA entry"
+                
+            return {
+                'dca_score': dca_score,
+                'recommendation': recommendation,
+                'suggested_frequency': frequency,
+                'position_size': allocation,
+                'reasoning': reasoning,
+                'risk_level': 'LOW' if dca_score >= 8 else 'MODERATE' if dca_score >= 4 else 'HIGH'
+            }
+            
+        except Exception:
+            return {
+                'dca_score': 0,
+                'recommendation': "INSUFFICIENT_DATA",
+                'suggested_frequency': "N/A",
+                'position_size': "N/A",
+                'reasoning': "Unable to calculate DCA recommendations",
+                'risk_level': 'HIGH'
+            }
 
 def main():
     """Run the Ultimate Crypto Analyzer"""
     
     print("+" + "=" * 68 + "+")
     print("|" + " " * 68 + "|")
-    print("|" + " 🚀 ULTIMATE CRYPTO ANALYZER ".center(68) + "|")
+    print("|" + " ULTIMATE CRYPTO ANALYZER ".center(68) + "|")
     print("|" + " AI Feedback Integrated System - 85% Better Prediction Accuracy ".center(68) + "|")
     print("|" + " " * 68 + "|")
     print("+" + "=" * 68 + "+")

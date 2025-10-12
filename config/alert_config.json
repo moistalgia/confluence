@@ -109,7 +109,7 @@
       "max_daily_alerts": 10,
       "description": "Volume 3x above average - institutional activity",
       "created_at": "2025-10-12T00:09:39.116805",
-      "last_triggered": ""
+      "last_triggered": "2025-10-12T11:46:24.214290"
     },
     {
       "id": "bollinger_squeeze",
@@ -153,7 +153,7 @@
       "max_daily_alerts": 10,
       "description": "Price breaking below key support level",
       "created_at": "2025-10-12T00:09:39.116807",
-      "last_triggered": "2025-10-12T11:12:21.985336"
+      "last_triggered": "2025-10-12T12:18:56.186838"
     },
     {
       "id": "resistance_break",
@@ -174,7 +174,7 @@
       "max_daily_alerts": 10,
       "description": "Price breaking above key resistance level",
       "created_at": "2025-10-12T00:09:39.116807",
-      "last_triggered": "2025-10-12T11:12:21.987155"
+      "last_triggered": "2025-10-12T12:18:56.188247"
     },
     {
       "id": "trend_reversal",
@@ -196,7 +196,7 @@
       "max_daily_alerts": 10,
       "description": "Multiple timeframes confirming trend reversal",
       "created_at": "2025-10-12T00:09:39.116808",
-      "last_triggered": "2025-10-12T10:38:48.859049"
+      "last_triggered": "2025-10-12T12:14:47.501216"
     }
   ]
 }
