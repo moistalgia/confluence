@@ -1188,6 +1188,243 @@ Each scenario must include specific price targets, probability percentages, time
 
 Replace generic "support/resistance" concepts with precise entry/exit levels and risk-reward calculations.
 
+## ENHANCED RISK ASSESSMENT FRAMEWORK
+**MANDATORY**: Provide quantified risk analysis beyond basic High/Medium/Low categories:
+
+**MARKET RISK METRICS:**
+- **Volatility Risk**: Current 20-day ATR percentage vs 3-month average
+- **Maximum Drawdown Estimate**: Worst-case scenario loss percentage with historical context
+- **Correlation Risk**: Asset correlation with BTC/ETH and traditional markets (SPY/QQQ)
+- **Liquidity Risk**: Average daily volume vs position size impact assessment
+
+**POSITION RISK ANALYSIS:**
+- **Stop Loss Risk**: Percentage risk per trade based on technical stop levels
+- **Time Risk**: Maximum acceptable holding period before reassessment
+- **Regime Risk**: How current market regime affects strategy effectiveness
+- **News/Event Risk**: Upcoming catalysts that could invalidate technical analysis
+
+**RISK-ADJUSTED TARGETS:**
+- **Conservative Target**: 80% probability achievement within timeframe
+- **Aggressive Target**: 40% probability achievement requiring favorable conditions
+- **Risk-Reward Ratios**: Minimum 1:2 R:R for swing trades, 1:1.5 for scalps
+
+**PORTFOLIO INTEGRATION:**
+- **Position Sizing Formula**: Risk per trade = (Account Risk % × Account Size) ÷ Stop Distance
+- **Maximum Exposure**: Asset class correlation limits and concentration risk
+- **Hedge Recommendations**: Offsetting positions or protective instruments if applicable
+
+## MARKET REGIME CLASSIFICATION REQUIREMENT
+**MANDATORY**: Identify and adapt strategies based on current market regime:
+
+**REGIME IDENTIFICATION:**
+- **Trending Market**: ADX > 25, clear directional bias, momentum confirmation
+  - Strategy: Trend following, breakout plays, momentum trades
+  - Risk: Trend reversal, false breakouts, overextension
+  
+- **Ranging Market**: ADX < 20, price oscillating between defined levels
+  - Strategy: Mean reversion, support/resistance bounces, range trading
+  - Risk: Range breakouts, low volatility traps, whipsaws
+
+- **Volatile/Choppy Market**: High ATR, conflicting signals, news-driven moves
+  - Strategy: Reduced position sizes, tighter stops, shorter timeframes
+  - Risk: Gap risk, stop hunting, rapid reversals
+
+**VOLATILITY REGIME ANALYSIS:**
+- **Low Volatility** (<20th percentile): Expect expansion, coiling patterns
+- **Normal Volatility** (20th-80th percentile): Standard strategy application
+- **High Volatility** (>80th percentile): Expect compression, range trades
+
+**REGIME-SPECIFIC ADAPTATIONS:**
+- **Bull Market**: Focus on dip buying, uptrend continuation, reduced short exposure
+- **Bear Market**: Focus on rally fading, downtrend continuation, defensive positioning
+- **Sideways Market**: Focus on range extremes, mean reversion, neutral strategies
+
+Each analysis must identify the current regime and adjust all strategy recommendations accordingly.
+
+## ENHANCED VOLUME PROFILE INTEGRATION
+**MANDATORY**: Provide detailed volume-based analysis with institutional perspective:
+
+**VOLUME POINT OF CONTROL (VPOC) ANALYSIS:**
+- **Current VPOC Level**: Exact price where most volume traded
+- **VPOC Strength**: Volume concentration percentage vs distributed profile
+- **Price-VPOC Relationship**: Distance and directional bias from high-volume node
+- **VPOC Migration**: How volume center has shifted over analysis period
+
+**HIGH VOLUME NODES (HVN) IDENTIFICATION:**
+- **Primary HVN**: Top 3 volume concentration areas with exact price levels
+- **HVN Confluence**: Where volume nodes align with technical levels
+- **Breakout Probability**: Volume-confirmed breakout likelihood above/below HVNs
+- **Institutional Footprint**: Evidence of large player accumulation/distribution
+
+**VALUE AREA ANALYSIS:**
+- **Value Area Range**: 70% of volume price boundaries with current price position
+- **Fair Value Gap**: Areas with minimal volume indicating potential fills
+- **Volume Imbalance**: Single prints and low-volume areas showing continuation potential
+- **Profile Shape**: Balanced vs imbalanced profile implications for future price action
+
+**VOLUME CONFIRMATION REQUIREMENTS:**
+- **Breakout Validation**: Minimum volume increase (150%+ of 20-day average)
+- **Trend Confirmation**: Volume pattern supporting directional bias
+- **Reversal Signals**: Volume climax or exhaustion patterns at key levels
+- **Accumulation/Distribution**: Volume pattern indicating institutional positioning
+
+## ADAPTIVE TIMEFRAME WEIGHTING REQUIREMENT
+**MANDATORY**: Apply dynamic weighting to timeframe signals based on market conditions:
+
+**WEIGHTING CRITERIA:**
+- **Trend Strength**: Higher weight to timeframes showing strongest directional conviction
+- **Volume Confirmation**: Increased weight for timeframes with above-average volume support
+- **Volatility Regime**: Adjust weighting based on current volatility environment
+- **Market Structure**: Weight based on clean vs choppy price action quality
+
+**DYNAMIC WEIGHTING EXAMPLES:**
+- **Strong Trending Market**: 4H (40%), 1D (35%), 1H (20%), 15M (5%)
+- **Ranging Market**: 1H (35%), 15M (30%), 4H (25%), 1D (10%) 
+- **High Volatility**: 15M (40%), 1H (35%), 4H (20%), 1D (5%)
+- **Low Volatility**: 1D (40%), 4H (35%), 1H (20%), 15M (5%)
+
+**SIGNAL STRENGTH MODIFIERS:**
+- **Confluence Boost**: +20% weight when 3+ indicators align on same timeframe
+- **Volume Validation**: +15% weight for signals with volume confirmation
+- **Clean Structure**: +10% weight for timeframes with clear support/resistance
+- **Fresh Signal**: -10% weight for signals showing divergence or weakening
+
+**WEIGHTED FINAL BIAS:**
+Calculate overall directional bias using weighted timeframe contributions rather than simple averaging. Provide transparency on weighting rationale and how it affects final recommendations.
+
+## CORRELATION AND SECTOR ANALYSIS REQUIREMENT
+**MANDATORY**: Provide broader market context through correlation and sector analysis:
+
+**CRYPTO MARKET CORRELATIONS:**
+- **BTC Correlation**: Current correlation coefficient and deviation analysis
+- **ETH Correlation**: Relationship strength and sector leadership implications  
+- **DXY Impact**: US Dollar strength effect on crypto positioning
+- **Risk-On/Risk-Off**: Correlation with traditional risk assets (QQQ, SPY)
+
+**SECTOR POSITIONING:**
+- **Layer 1 vs Layer 2**: Relative performance and rotation patterns
+- **DeFi vs Infrastructure**: Sector rotation and narrative strength
+- **Meme vs Utility**: Market preference and risk appetite indicators
+- **Large Cap vs Small Cap**: Risk appetite and market maturity signals
+
+**MARKET REGIME CORRELATION:**
+- **Bull Market Correlation**: How correlations compress during risk-on periods
+- **Bear Market Correlation**: Increased correlation during stress periods
+- **Ranging Market**: Correlation breakdown and individual asset focus
+- **Volatility Spillover**: Cross-asset volatility transmission patterns
+
+**TRADING IMPLICATIONS:**
+- **Hedge Effectiveness**: Which assets provide true diversification
+- **Risk Concentration**: Hidden correlation risks in portfolio construction
+- **Sector Rotation Signals**: Leading indicators for asset class shifts
+- **Macro Context**: How broader market moves affect individual asset outlook
+
+**CORRELATION-ADJUSTED TARGETS:**
+- Account for correlation in risk management and position sizing
+- Adjust targets based on sector momentum and relative strength
+- Identify when asset is moving independently vs following broader trends
+
+## MOMENTUM CATALYST INTEGRATION
+**MANDATORY**: Evaluate fundamental catalysts and their impact on technical analysis:
+
+**NEWS AND EVENTS ASSESSMENT:**
+- **Upcoming Events**: Major announcements, partnerships, product launches within 7-14 days
+- **Recent Developments**: Impact of news from past 24-48 hours on technical setup validity
+- **Market Sentiment Shift**: How recent news affects market participant behavior and technical levels
+- **Event Risk Timeline**: Specific dates that could invalidate or accelerate technical patterns
+
+**REGULATORY ENVIRONMENT:**
+- **Regulatory Clarity**: How regulatory developments affect sector and individual asset outlook
+- **Compliance Status**: Asset's regulatory standing and potential impacts on institutional adoption
+- **Geographic Risks**: Regional regulatory changes affecting market access or legitimacy
+- **Policy Timeline**: Known regulatory decisions or hearings that could impact price action
+
+**FUNDAMENTAL MOMENTUM FACTORS:**
+- **Adoption Metrics**: User growth, TVL changes, transaction volume trends affecting long-term trajectory
+- **Technology Updates**: Major upgrades, bug fixes, or technological improvements
+- **Competitive Landscape**: How competitor developments affect relative positioning
+- **Ecosystem Health**: Network activity, developer activity, community engagement trends
+
+**CATALYST IMPACT ON TECHNICAL ANALYSIS:**
+- **Bullish Catalysts**: News that could accelerate upside breakouts beyond technical targets
+- **Bearish Catalysts**: Developments that could invalidate technical support levels
+- **Timing Considerations**: How catalyst timing affects entry/exit strategy and holding periods
+- **Risk Adjustment**: How fundamental risks modify technical position sizing and stop placement
+
+**INTEGRATION WITH TECHNICAL SIGNALS:**
+- When fundamental momentum aligns with technical setup (high confidence)
+- When fundamental momentum contradicts technical signals (reduced confidence)
+- How to adjust timeframes and targets based on fundamental catalyst timeline
+- When to override technical signals due to overwhelming fundamental factors
+
+## OPTIONS FLOW INTEGRATION (For Applicable Assets)
+**CONDITIONAL REQUIREMENT**: For assets with active options markets, integrate derivatives data:
+
+**OPTIONS FLOW ANALYSIS:**
+- **Put/Call Ratio**: Current ratio vs historical average indicating directional bias
+- **Options Volume**: Unusual options activity suggesting informed positioning
+- **Open Interest**: Large options positions that could influence spot price at expiration
+- **Implied Volatility**: IV rank and skew indicating market expectations vs realized volatility
+
+**GAMMA EXPOSURE ANALYSIS:**
+- **Dealer Gamma Position**: Whether dealers are long or short gamma affecting price action
+- **Gamma Levels**: Key strike prices with high gamma concentration affecting support/resistance
+- **Gamma Squeeze Potential**: Conditions that could trigger accelerated price moves
+- **Volatility Suppression**: How dealer hedging affects intraday volatility patterns
+
+**OPTIONS-INFORMED DIRECTIONAL BIAS:**
+- **Smart Money Indicators**: Unusual options activity suggesting institutional positioning
+- **Positioning Extremes**: When options positioning reaches levels historically associated with reversals
+- **Expiration Effects**: How upcoming options expiration affects technical level significance
+- **Volatility Expectations**: How options-implied volatility compares to technical analysis expectations
+
+**RISK MANAGEMENT INTEGRATION:**
+- **Pin Risk**: How large options positions might pin price at specific levels
+- **Convexity Risk**: How options flows could amplify or dampen technical breakouts
+- **Volatility Risk**: When options positioning suggests higher volatility than technical analysis indicates
+- **Timing Risk**: How options expiration cycles affect optimal entry/exit timing
+
+**OPTIONS-ADJUSTED STRATEGY:**
+- Scale position sizes based on options flow alignment with technical bias
+- Adjust profit targets based on options-derived support/resistance levels
+- Modify stop placement considering gamma levels and dealer positioning
+- Time entries/exits around options expiration when appropriate
+
+*Note: This section applies only to assets with liquid options markets (primarily BTC, ETH). For assets without options, focus on spot market dynamics exclusively.*
+
+## BACKTESTING VALIDATION INTEGRATION
+**MANDATORY**: Provide statistical validation for analysis conclusions:
+
+**HISTORICAL PERFORMANCE METRICS:**
+- **Similar Setup Success Rate**: Win/loss ratio for comparable technical setups
+- **Average Hold Time**: Typical duration for similar patterns to resolve
+- **Risk-Reward Distribution**: Historical R:R ratios achieved in similar conditions
+- **Maximum Adverse Excursion**: Worst drawdown before successful resolution
+
+**PATTERN RECOGNITION VALIDATION:**
+- **Pattern Frequency**: How often this setup appears in historical data
+- **Breakout Success Rate**: Percentage of similar patterns that follow through
+- **False Signal Rate**: Frequency of failed signals in similar market conditions
+- **Seasonality Effects**: Time-of-year or market cycle influences on success rates
+
+**STATISTICAL CONFIDENCE LEVELS:**
+- **High Confidence (>70%)**: Clear historical precedent with consistent outcomes
+- **Medium Confidence (50-70%)**: Mixed historical results, context-dependent success
+- **Low Confidence (<50%)**: Limited precedent or inconsistent historical performance
+- **Insufficient Data**: Novel setup requiring extra caution and smaller position sizes
+
+**MARKET CONDITION CONTEXT:**
+- **Trending Market Performance**: How similar setups perform in trending conditions
+- **Ranging Market Performance**: Success rates in sideways market environments  
+- **High Volatility Performance**: Pattern effectiveness during volatile periods
+- **Low Volatility Performance**: Success rates in low volatility environments
+
+**VALIDATION-ADJUSTED RECOMMENDATIONS:**
+- Scale position sizes based on historical success rates
+- Adjust target expectations based on historical performance distribution
+- Provide confidence intervals for profit targets and timeframes
+- Flag when current setup deviates from historical norm requiring extra caution
+
 ## PRECISION REQUIREMENTS
 **CRITICAL**: When referencing specific price levels in your analysis, maintain the precision provided in the data:
 - Use 4 decimal places for mid-range assets ($1-$100) like XRP: $2.5300, not $2.53

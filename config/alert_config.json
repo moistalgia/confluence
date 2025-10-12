@@ -153,7 +153,7 @@
       "max_daily_alerts": 10,
       "description": "Price breaking below key support level",
       "created_at": "2025-10-12T00:09:39.116807",
-      "last_triggered": "2025-10-12T13:42:00.271427"
+      "last_triggered": "2025-10-12T14:27:44.062463"
     },
     {
       "id": "resistance_break",
@@ -174,7 +174,7 @@
       "max_daily_alerts": 10,
       "description": "Price breaking above key resistance level",
       "created_at": "2025-10-12T00:09:39.116807",
-      "last_triggered": "2025-10-12T13:42:00.273397"
+      "last_triggered": "2025-10-12T14:27:44.064014"
     },
     {
       "id": "trend_reversal",
@@ -196,7 +196,7 @@
       "max_daily_alerts": 10,
       "description": "Multiple timeframes confirming trend reversal",
       "created_at": "2025-10-12T00:09:39.116808",
-      "last_triggered": "2025-10-12T13:42:00.274358"
+      "last_triggered": "2025-10-12T14:27:44.064916"
     }
   ]
 }
