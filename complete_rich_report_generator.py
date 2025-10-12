@@ -223,24 +223,49 @@ def generate_complete_rich_report(symbol: str, analysis: Dict, llm_response: Dic
                 <div class="timeframe-grid">"""
     
     # Add timeframe breakdown
-    timeframe_analysis = mtf_data.get('timeframe_analysis', {})
+    timeframe_analysis = mtf_data.get('timeframe_data', {})
     for tf, tf_data in timeframe_analysis.items():
-        trend = tf_data.get('trend_direction', 'UNKNOWN')
-        momentum = tf_data.get('momentum_strength', 'UNKNOWN')
+        # Skip error entries
+        if isinstance(tf_data, dict) and 'error' in tf_data:
+            continue
+            
+        # Extract indicators and calculate trend/momentum
+        indicators = tf_data.get('indicators', {})
+        rsi = indicators.get('rsi', 50)
+        macd_line = indicators.get('macd_line', 0)
+        macd_signal = indicators.get('macd_signal', 0)
+        adx = indicators.get('adx', 0)
+        
+        # Determine trend based on indicators
+        if rsi > 60 and macd_line > macd_signal:
+            trend = 'BULLISH'
+            if rsi > 70:
+                trend = 'STRONG BULLISH'
+        elif rsi < 40 and macd_line < macd_signal:
+            trend = 'BEARISH'
+            if rsi < 30:
+                trend = 'STRONG BEARISH'
+        else:
+            trend = 'NEUTRAL'
+            
+        # Determine momentum strength
+        if adx > 40:
+            momentum = 'STRONG'
+        elif adx > 25:
+            momentum = 'MODERATE'
+        else:
+            momentum = 'WEAK'
+            
         html_report += f"""
                     <div class="timeframe-item">
                         <h4>{tf.upper()}</h4>
                         <div>Trend: {trend}</div>
                         <div>Momentum: {momentum}</div>"""
         
-        # Add indicators if available
-        indicators = tf_data.get('key_indicators', {})
-        for indicator, value in indicators.items():
-            if value is not None:
-                if isinstance(value, float):
-                    html_report += f"""<div class="indicator">{indicator.upper()}: {value:.2f}</div>"""
-                else:
-                    html_report += f"""<div class="indicator">{indicator.upper()}: {value}</div>"""
+        # Add key indicators
+        html_report += f"""<div class="indicator">RSI: {rsi:.1f}</div>"""
+        html_report += f"""<div class="indicator">MACD: {macd_line:.4f}</div>"""
+        html_report += f"""<div class="indicator">ADX: {adx:.1f}</div>"""
         
         html_report += """</div>"""
     

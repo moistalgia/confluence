@@ -116,13 +116,14 @@ class UltimateCryptoAnalyzer:
             logger.info("📊 Running multi-timeframe analysis...")
             crypto_logger.log_verification_point("Starting multi-timeframe analysis", True, f"Symbol: {symbol}")
             
-            timeframe_data = self.multi_timeframe_analyzer.fetch_multi_timeframe_data(symbol)
+            mtf_analysis = self.multi_timeframe_analyzer.analyze_multi_timeframe(symbol)
             
             # Verify timeframe data integrity
-            if timeframe_data:
-                crypto_logger.log_data_checkpoint("raw_timeframe_data", timeframe_data)
+            if mtf_analysis and mtf_analysis.get('timeframe_data'):
+                crypto_logger.log_data_checkpoint("raw_timeframe_data", mtf_analysis)
                 
                 # Data integrity check for timeframes
+                timeframe_data = mtf_analysis.get('timeframe_data', {})
                 expected_timeframes = ['1d', '4h', '1h', '15m']
                 crypto_logger.log_data_integrity_check(
                     "timeframe_data", 
@@ -135,21 +136,16 @@ class UltimateCryptoAnalyzer:
                 raw_data_file = self.raw_data_dir / f"{symbol.replace('/', '_')}_timeframe_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
                 try:
                     with open(raw_data_file, 'w') as f:
-                        json.dump(timeframe_data, f, indent=2, default=str)
+                        json.dump(mtf_analysis, f, indent=2, default=str)
                     ultimate_analysis['data_persistence']['raw_data_saved'] = True
                     crypto_logger.log_file_operation("SAVE", str(raw_data_file), True, raw_data_file.stat().st_size)
                 except Exception as e:
                     crypto_logger.log_file_operation("SAVE", str(raw_data_file), False, error=str(e))
                 
-                enhanced_data = self.multi_timeframe_analyzer.calculate_enhanced_indicators(timeframe_data)
-                crypto_logger.log_data_checkpoint("enhanced_indicators_data", enhanced_data)
-                
-                mtf_analysis = self.multi_timeframe_analyzer.analyze_multi_timeframe_signals(symbol, enhanced_data)
-                
                 ultimate_analysis['multi_timeframe_analysis'] = mtf_analysis
                 crypto_logger.log_verification_point("Multi-timeframe analysis completed", True, 
-                                                   f"Confluence Score: {mtf_analysis.get('confluence_score', 'N/A')}/100")
-                logger.info(f"✅ Multi-timeframe: Confluence Score {mtf_analysis.get('confluence_score', 0)}/100")
+                                                   f"Confluence Score: {mtf_analysis.get('confluence_analysis', {}).get('confluence_score', 'N/A')}/100")
+                logger.info(f"✅ Multi-timeframe: Confluence Score {mtf_analysis.get('confluence_analysis', {}).get('confluence_score', 0)}/100")
             else:
                 logger.warning("❌ Multi-timeframe analysis failed")
                 ultimate_analysis['multi_timeframe_analysis'] = {'error': 'No timeframe data available'}
@@ -305,15 +301,39 @@ class UltimateCryptoAnalyzer:
         
         # Technical analysis score (from timeframes)
         if 'multi_timeframe_analysis' in analysis:
-            tf_analysis = analysis['multi_timeframe_analysis'].get('timeframe_analysis', {})
+            # Use timeframe_data (the correct key) instead of timeframe_analysis
+            mtf_data = analysis['multi_timeframe_analysis']
+            tf_data = mtf_data.get('timeframe_data', {})
             
             bullish_timeframes = 0
-            total_timeframes = len(tf_analysis)
+            total_timeframes = len(tf_data)
             
-            for tf_name, tf_data in tf_analysis.items():
-                trend = tf_data.get('trend_direction', '')
-                if 'BULLISH' in trend:
-                    bullish_timeframes += 2 if 'STRONG' in trend else 1
+            for tf_name, tf_info in tf_data.items():
+                # Skip error entries
+                if isinstance(tf_info, dict) and 'error' in tf_info:
+                    total_timeframes -= 1
+                    continue
+                    
+                indicators = tf_info.get('indicators', {})
+                
+                # Calculate trend based on RSI and MACD
+                rsi = indicators.get('rsi', 50)
+                macd_signal = indicators.get('macd_signal', 0)
+                macd_line = indicators.get('macd_line', 0)
+                
+                # Bullish conditions
+                is_bullish = False
+                is_strong = False
+                
+                if rsi > 60 and macd_line > macd_signal:
+                    is_bullish = True
+                    if rsi > 70 and (macd_line - macd_signal) > 0.1:
+                        is_strong = True
+                elif rsi > 50 and macd_line > macd_signal and (macd_line - macd_signal) > 0.05:
+                    is_bullish = True
+                
+                if is_bullish:
+                    bullish_timeframes += 2 if is_strong else 1
             
             if total_timeframes > 0:
                 scores['technical_score'] = min(100, (bullish_timeframes / (total_timeframes * 2)) * 100)
@@ -390,7 +410,7 @@ class UltimateCryptoAnalyzer:
             
             # Timeframe alignment
             if 'multi_timeframe_analysis' in analysis:
-                tf_data = analysis['multi_timeframe_analysis'].get('timeframe_analysis', {})
+                tf_data = analysis['multi_timeframe_analysis'].get('timeframe_data', {})
                 
                 for tf_name, tf_info in tf_data.items():
                     signals['timeframe_alignment'][tf_name] = {
@@ -414,10 +434,27 @@ class UltimateCryptoAnalyzer:
         ultimate_score = analysis.get('ultimate_score', {})
         signals = analysis.get('enhanced_trading_signals', {})
         
-        # Get current price from volume analysis
+        # Get current price from volume analysis (CORRECTED PATH)
         current_price = 0
-        if 'volume_profile_analysis' in analysis and 'price_analysis' in analysis['volume_profile_analysis']:
+        
+        # Primary source: volume profile metadata
+        if 'volume_profile_analysis' in analysis and 'metadata' in analysis['volume_profile_analysis']:
+            current_price = analysis['volume_profile_analysis']['metadata'].get('current_price', 0)
+        
+        # Fallback: Try price_analysis in volume profile
+        if current_price == 0 and 'volume_profile_analysis' in analysis and 'price_analysis' in analysis['volume_profile_analysis']:
             current_price = analysis['volume_profile_analysis']['price_analysis'].get('current_price', 0)
+        
+        # Final fallback: Try to get from timeframe data
+        if current_price == 0 and 'multi_timeframe_analysis' in analysis:
+            mtf_data = analysis['multi_timeframe_analysis']
+            if 'timeframe_data' in mtf_data:
+                # Try to get latest close price from any timeframe
+                for tf_name, tf_data in mtf_data['timeframe_data'].items():
+                    if 'ohlcv' in tf_data and tf_data['ohlcv']:
+                        current_price = tf_data['ohlcv'][-1].get('close', 0)
+                        if current_price > 0:
+                            break
         
         prompt = f"""# ULTIMATE CRYPTOCURRENCY TRADING ANALYSIS - AI ENHANCED
 
@@ -463,16 +500,136 @@ This analysis incorporates the following enhancements based on professional AI f
         if 'multi_timeframe_analysis' in analysis and 'error' not in analysis['multi_timeframe_analysis']:
             mtf_data = analysis['multi_timeframe_analysis']
             
+            # Get confluence score from correct location
+            confluence_score = mtf_data.get('confluence_analysis', {}).get('overall_score', 0)
+            
             prompt += f"""
 
 ### Multi-Timeframe Analysis
-- **Confluence Score**: {mtf_data.get('confluence_score', 0)}/100
+- **Confluence Score**: {confluence_score}/100
 
 **Timeframe Breakdown**:"""
             
-            for tf_name, tf_data in mtf_data.get('timeframe_analysis', {}).items():
+            # Extract timeframe data from correct structure
+            for tf_name, tf_data in mtf_data.get('timeframe_data', {}).items():
+                # Extract trend and indicators from correct structure
+                indicators = tf_data.get('indicators', {})
+                trend = indicators.get('trend', 'UNKNOWN')
+                rsi = indicators.get('rsi', 0)
+                
+                # Determine momentum strength from RSI
+                if rsi > 60:
+                    momentum = 'STRONG_BULLISH'
+                elif rsi > 50:
+                    momentum = 'BULLISH'
+                elif rsi < 40:
+                    momentum = 'STRONG_BEARISH'
+                elif rsi < 50:
+                    momentum = 'BEARISH'
+                else:
+                    momentum = 'NEUTRAL'
+                
+                # Add ADX for trend strength
+                adx = indicators.get('adx', indicators.get('ADX', 0))
+                if adx > 50:
+                    adx_strength = 'EXTREME'
+                elif adx > 40:
+                    adx_strength = 'STRONG'
+                elif adx > 25:
+                    adx_strength = 'MODERATE'
+                else:
+                    adx_strength = 'WEAK'
+                
+                # Extract comprehensive indicator data
+                macd_line = indicators.get('macd', 0)
+                macd_signal = indicators.get('macd_signal', 0)
+                macd_hist = indicators.get('macd_histogram', 0)
+                stoch = indicators.get('stoch', 0)
+                stoch_signal = indicators.get('stoch_signal', 0)
+                bb_position = "UNKNOWN"
+                
+                # Bollinger Band position
+                current_price = indicators.get('price', 0)
+                bb_upper = indicators.get('bb_upper', 0)
+                bb_lower = indicators.get('bb_lower', 0)
+                bb_middle = indicators.get('bb_middle', 0)
+                
+                if bb_upper > 0 and current_price > 0:
+                    if current_price > bb_upper:
+                        bb_position = "ABOVE_UPPER"
+                    elif current_price < bb_lower:
+                        bb_position = "BELOW_LOWER"
+                    elif current_price > bb_middle:
+                        bb_position = "ABOVE_MIDDLE"
+                    else:
+                        bb_position = "BELOW_MIDDLE"
+                
+                # VWAP information
+                vwap = indicators.get('vwap', 0)
+                vwap_signal = indicators.get('vwap_signal', 'UNKNOWN')
+                vwap_distance_percent = indicators.get('vwap_distance_percent', 0)
+                vwap_band_position = indicators.get('vwap_band_position', 'UNKNOWN')
+                
+                # Volume analysis
+                volume_ratio = indicators.get('volume_ratio', 0)
+                atr_percent = indicators.get('atr_percent', 0)
+                obv = indicators.get('obv', 0)
+                
                 prompt += f"""
-- **{tf_name.upper()}**: {tf_data.get('trend_direction', 'UNKNOWN')} | Momentum: {tf_data.get('momentum_strength', 'UNKNOWN')}"""
+- **{tf_name.upper()}**: {trend} | Momentum: {momentum} | Trend Strength: {adx_strength}
+
+  **Technical Indicators**:
+  - RSI: {rsi:.1f} {'(EXTREME OVERSOLD)' if rsi < 25 else '(OVERSOLD)' if rsi < 30 else '(OVERBOUGHT)' if rsi > 70 else '(STRONG)' if rsi > 60 else '(NEUTRAL)'}
+  - MACD: {macd_line:.2f} / {macd_signal:.2f} (Hist: {macd_hist:.2f}) {'- BULLISH DIVERGENCE' if macd_hist > 0 and macd_line < macd_signal else '- BEARISH' if macd_line < macd_signal else '- BULLISH'}
+  - Stochastic: {stoch:.1f} / {stoch_signal:.1f} {'(EXTREME OVERSOLD)' if stoch < 20 else '(OVERSOLD)' if stoch < 30 else '(OVERBOUGHT)' if stoch > 80 else ''}
+  - ADX: {adx:.1f} ({adx_strength})
+  - Bollinger Position: {bb_position}"""
+                
+                if vwap > 0:
+                    prompt += f"""
+  - VWAP: ${vwap:.2f} | {vwap_signal} ({vwap_distance_percent:+.2f}%) | Band Position: {vwap_band_position}"""
+                
+                prompt += f"""
+  - Volume: {volume_ratio:.2f}x avg | ATR: {atr_percent:.2f}% | OBV: {obv:,.0f}"""
+            
+            # Add detailed confluence analysis
+            confluence_data = mtf_data.get('confluence_analysis', {})
+            if confluence_data:
+                prompt += f"""
+
+**Confluence Analysis Details**:
+- **Overall Score**: {confluence_score}/100"""
+                
+                # Trend alignment details
+                trend_alignment = confluence_data.get('trend_alignment', {})
+                if trend_alignment:
+                    trends = trend_alignment.get('trends', {})
+                    dominant_trend = trend_alignment.get('dominant_trend', 'MIXED')
+                    alignment_strength = trend_alignment.get('alignment_strength', 0)
+                    prompt += f"""
+- **Trend Alignment**: {dominant_trend} (Strength: {alignment_strength:.1%})
+  - Weekly: {trends.get('1w', 'N/A')}
+  - Daily: {trends.get('1d', 'N/A')} 
+  - 4H: {trends.get('4h', 'N/A')}
+  - 1H: {trends.get('1h', 'N/A')}"""
+                
+                # Momentum confluence
+                momentum_conf = confluence_data.get('momentum_confluence', {})
+                if momentum_conf:
+                    avg_rsi = momentum_conf.get('average_rsi', 50)
+                    momentum_bias = momentum_conf.get('momentum_bias', 'NEUTRAL')
+                    alignment_score = momentum_conf.get('alignment_score', 0)
+                    prompt += f"""
+- **Momentum Confluence**: {momentum_bias} (Alignment: {alignment_score:.1%})
+  - Average RSI: {avg_rsi:.1f}"""
+                
+                # Volume confirmation
+                volume_conf = confluence_data.get('volume_confirmation', {})
+                if volume_conf:
+                    avg_volume = volume_conf.get('average_volume_ratio', 1)
+                    volume_strength = volume_conf.get('volume_strength', 'LOW')
+                    prompt += f"""
+- **Volume Confirmation**: {volume_strength} (Ratio: {avg_volume:.2f}x)"""
             
             # Add Fibonacci levels if available
             if mtf_data.get('fibonacci_levels'):
