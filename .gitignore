@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.py[co]
 *.so
 *.egg
 *.egg-info/
@@ -10,17 +11,22 @@ build/
 env/
 venv/
 .venv/
+.pytest_cache/
 
 # Environment and config
 config.env
 .env
+.env.local
+.env.production
 *.log
 
-# IDE
+# IDE and Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
@@ -30,9 +36,61 @@ config.env
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Project specific
+# Project specific - Generated content
 output/
+output_*/
 logs/
+cache/
 analysis_results/
 archive_obsolete/
+temp/
+tmp/
+
+# Generated reports and data
+*.html
+*.csv
+*.json
+!config/*.json
+!requirements.txt
+!package.json
+
+# AI API keys and secrets
+*.key
+*.secret
+api_keys.txt
+
+# Large data files
+*.parquet
+*.h5
+*.hdf5
+data/*.csv
+data/*.json
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Model files
+*.pkl
+*.joblib
+*.model
+
+# Documentation builds
+docs/_build/
+site/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# pytest
+.pytest_cache/
+.cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
