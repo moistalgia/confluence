@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Define trading pairs for different strategies - VERIFIED KRAKEN PAIRS ONLY
 CUSTOM_PAIRS = {
-    'specific_request': ['XRP/USD', 'ATOM/USD', 'NEAR/USD', 'MANA/USD'],  # User requested LINEA/USD
+    'specific_request': ['HBAR/USD'],  # User requested LINEA/USD
     # 'LINEA/USD', 'MANA/USD', 'XRP/USD', 'BTC/USD', 'NEAR/USD'
     'kraken_top_majors': [
         # Verified top pairs on Kraken (removed MATIC/USD - not available)

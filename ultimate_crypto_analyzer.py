@@ -23,6 +23,9 @@ from complete_prompt_generator import generate_complete_ultimate_prompt
 from enhanced_multi_timeframe_analyzer import EnhancedMultiTimeframeAnalyzer
 from volume_profile_analyzer import VolumeProfileAnalyzer
 from enhanced_logging import crypto_logger, log_function
+from hft_signals import OrderBookAnalyzer, HFTIntegrator, create_sample_hft_signal
+from sentiment_analyzer_enhanced import EnhancedSentimentAnalyzer, SentimentData
+from accumulation_analyzer import AccumulationAnalyzer
 
 # Setup module logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -46,6 +49,18 @@ class UltimateCryptoAnalyzer:
             
             self.volume_profile_analyzer = VolumeProfileAnalyzer()
             crypto_logger.log_data_checkpoint("volume_profile_analyzer", self.volume_profile_analyzer)
+            
+            # Initialize sentiment analyzer
+            self.sentiment_analyzer = EnhancedSentimentAnalyzer()
+            crypto_logger.log_data_checkpoint("sentiment_analyzer", self.sentiment_analyzer)
+            
+            # Initialize accumulation analyzer
+            self.accumulation_analyzer = AccumulationAnalyzer()
+            crypto_logger.log_data_checkpoint("accumulation_analyzer", self.accumulation_analyzer)
+            
+            # Initialize HFT microstructure analyzer
+            self.hft_integrator = HFTIntegrator()
+            crypto_logger.log_data_checkpoint("hft_integrator", "Initialized")
             
             self.output_dir = Path("output/ultimate_analysis")
             self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -190,7 +205,124 @@ class UltimateCryptoAnalyzer:
                 crypto_logger.log_verification_point("Volume profile analysis failed", False, 
                                                    f"Error: {volume_analysis.get('error', 'Unknown error')}")
             
-            # 3. Ultimate Trading Score (Confluence Analysis)
+            # 3. HFT Microstructure Analysis (PHASE 1: Informational)
+            logger.info("⚡ Running HFT microstructure analysis...")
+            crypto_logger.log_verification_point("Starting HFT analysis", True, "Phase 1: Informational only")
+            
+            try:
+                # For Phase 1, we'll use sample data (your friend's screenshot data)
+                # In Phase 2+, this would connect to real L3 order book feed
+                hft_signal = create_sample_hft_signal()
+                
+                # Get technical bias for alignment analysis
+                technical_bias = "NEUTRAL"  # Default
+                if 'multi_timeframe_analysis' in ultimate_analysis:
+                    confluence_analysis = ultimate_analysis['multi_timeframe_analysis'].get('confluence_analysis', {})
+                    overall_confluence = confluence_analysis.get('overall_confluence', {})
+                    confluence_score = overall_confluence.get('confluence_score', 50)
+                    
+                    # Convert confluence score to technical bias
+                    if confluence_score >= 70:
+                        technical_bias = "STRONG_BULLISH"
+                    elif confluence_score >= 60:
+                        technical_bias = "WEAK_BULLISH"  
+                    elif confluence_score <= 30:
+                        technical_bias = "STRONG_BEARISH"
+                    elif confluence_score <= 40:
+                        technical_bias = "WEAK_BEARISH"
+                    else:
+                        technical_bias = "NEUTRAL"
+                
+                # Perform HFT-Technical alignment analysis
+                alignment_analysis = self.hft_integrator.check_hft_technical_alignment(hft_signal, technical_bias)
+                
+                # Store HFT analysis data
+                ultimate_analysis['hft_microstructure'] = {
+                    'signal': hft_signal.signal,
+                    'score': hft_signal.score,
+                    'confidence': hft_signal.confidence,
+                    'timeframe': hft_signal.timeframe,
+                    'components': hft_signal.components,
+                    'alerts': hft_signal.alerts,
+                    'last_update': hft_signal.last_update.isoformat(),
+                    'alignment_analysis': alignment_analysis,
+                    'technical_bias_used': technical_bias,
+                    'phase': 'INFORMATIONAL_ONLY'  # Mark as Phase 1
+                }
+                
+                logger.info(f"✅ HFT Analysis: {hft_signal.signal} ({hft_signal.score:+.1f}/100) - {alignment_analysis['alignment']['type']}")
+                crypto_logger.log_verification_point("HFT analysis completed", True, 
+                                                   f"Signal: {hft_signal.signal}, Alignment: {alignment_analysis['alignment']['type']}")
+                
+            except Exception as e:
+                logger.warning(f"❌ HFT analysis failed: {str(e)}")
+                ultimate_analysis['hft_microstructure'] = {'error': f'HFT analysis failed: {str(e)}'}
+                crypto_logger.log_verification_point("HFT analysis failed", False, f"Error: {str(e)}")
+            
+            # 4. Sentiment Analysis (+15% confidence for accumulation strategies)
+            logger.info("🎭 Running sentiment analysis...")
+            crypto_logger.log_verification_point("Starting sentiment analysis", True, f"Symbol: {symbol}")
+            
+            try:
+                sentiment_data = self.sentiment_analyzer.get_comprehensive_sentiment(symbol)
+                
+                # Store sentiment analysis data
+                ultimate_analysis['sentiment_analysis'] = {
+                    'fear_greed_index': sentiment_data.fear_greed_index,
+                    'fear_greed_classification': sentiment_data.fear_greed_classification,
+                    'social_sentiment': sentiment_data.social_sentiment,
+                    'funding_rate': sentiment_data.funding_rate,
+                    'funding_sentiment': sentiment_data.funding_sentiment,
+                    'overall_sentiment': sentiment_data.overall_sentiment,
+                    'sentiment_score': sentiment_data.sentiment_score,
+                    'data_sources': sentiment_data.data_sources,
+                    'timestamp': sentiment_data.timestamp,
+                    'accumulation_implications': self._analyze_accumulation_sentiment(sentiment_data)
+                }
+                
+                logger.info(f"✅ Sentiment: {sentiment_data.overall_sentiment} (F&G: {sentiment_data.fear_greed_index}/100)")
+                crypto_logger.log_verification_point("Sentiment analysis completed", True, 
+                                                   f"Overall: {sentiment_data.overall_sentiment}, F&G: {sentiment_data.fear_greed_index}")
+                
+            except Exception as e:
+                logger.warning(f"❌ Sentiment analysis failed: {str(e)}")
+                ultimate_analysis['sentiment_analysis'] = {'error': f'Sentiment analysis failed: {str(e)}'}
+                crypto_logger.log_verification_point("Sentiment analysis failed", False, f"Error: {str(e)}")
+            
+            # 5. Multi-Horizon Accumulation Analysis (+20% confidence for buy-and-hold strategies)
+            logger.info("💎 Running accumulation analysis...")
+            crypto_logger.log_verification_point("Starting accumulation analysis", True, f"Symbol: {symbol}")
+            
+            try:
+                accumulation_recommendation = self.accumulation_analyzer.analyze_accumulation_opportunities(symbol, ultimate_analysis)
+                
+                # Store accumulation analysis data
+                ultimate_analysis['accumulation_analysis'] = {
+                    'one_month_score': accumulation_recommendation.one_month_score,
+                    'six_month_score': accumulation_recommendation.six_month_score,
+                    'one_year_plus_score': accumulation_recommendation.one_year_plus_score,
+                    'one_month_recommendation': accumulation_recommendation.one_month_recommendation,
+                    'six_month_recommendation': accumulation_recommendation.six_month_recommendation,
+                    'one_year_plus_recommendation': accumulation_recommendation.one_year_plus_recommendation,
+                    'technical_factors': accumulation_recommendation.technical_factors,
+                    'sentiment_factors': accumulation_recommendation.sentiment_factors,
+                    'fundamental_factors': accumulation_recommendation.fundamental_factors,
+                    'risk_factors': accumulation_recommendation.risk_factors,
+                    'dca_strategies': accumulation_recommendation.dca_strategies,
+                    'entry_zones': accumulation_recommendation.entry_zones,
+                    'exit_criteria': accumulation_recommendation.exit_criteria
+                }
+                
+                logger.info(f"✅ Accumulation: 1M:{accumulation_recommendation.one_month_score:.1f} | 6M:{accumulation_recommendation.six_month_score:.1f} | 1Y+:{accumulation_recommendation.one_year_plus_score:.1f}")
+                crypto_logger.log_verification_point("Accumulation analysis completed", True, 
+                                                   f"Scores - 1M:{accumulation_recommendation.one_month_score:.1f}, 6M:{accumulation_recommendation.six_month_score:.1f}, 1Y+:{accumulation_recommendation.one_year_plus_score:.1f}")
+                
+            except Exception as e:
+                logger.warning(f"❌ Accumulation analysis failed: {str(e)}")
+                ultimate_analysis['accumulation_analysis'] = {'error': f'Accumulation analysis failed: {str(e)}'}
+                crypto_logger.log_verification_point("Accumulation analysis failed", False, f"Error: {str(e)}")
+            
+            # 6. Ultimate Trading Score (Confluence Analysis) 
             logger.info("🎯 Calculating ultimate trading score...")
             crypto_logger.log_verification_point("Starting ultimate score calculation", True)
             
@@ -269,15 +401,19 @@ class UltimateCryptoAnalyzer:
             'multi_timeframe_score': 0,
             'volume_profile_score': 0,
             'technical_score': 0,
+            'hft_microstructure_score': 50,  # Default neutral (will be overridden if HFT data available)
+            'sentiment_accumulation_score': 50,  # Default neutral (will be overridden if sentiment data available)
             'confluence_bonus': 0,
             'obv_divergence_bonus': 0,
             'fibonacci_level_bonus': 0
         }
         
         weights = {
-            'multi_timeframe': 0.4,  # 40% weight (highest impact)
-            'volume_profile': 0.35,  # 35% weight (second highest) 
-            'technical': 0.25        # 25% weight (traditional TA)
+            'multi_timeframe': 0.35,  # 35% weight (reduced to make room for sentiment)
+            'volume_profile': 0.30,   # 30% weight (reduced)
+            'technical': 0.15,        # 15% weight (reduced)
+            'sentiment_accumulation': 0.15,  # 15% weight (new - for accumulation strategies)
+            'hft_microstructure': 0.05  # 5% weight (timing enhancement)
         }
         
         # Multi-timeframe score
@@ -331,21 +467,51 @@ class UltimateCryptoAnalyzer:
                 # Technical signal strength (bullish or bearish)
                 signal_strength = 0
                 
-                # Bullish conditions
-                if rsi > 60 and macd_line > macd_signal:
-                    signal_strength = 2 if (rsi > 70 and (macd_line - macd_signal) > 0.1) else 1
-                elif rsi > 50 and macd_line > macd_signal and (macd_line - macd_signal) > 0.05:
-                    signal_strength = 1
-                # Bearish conditions  
-                elif rsi < 40 and macd_line < macd_signal:
-                    signal_strength = 2 if (rsi < 30 and (macd_signal - macd_line) > 0.1) else 1
-                elif rsi < 50 and macd_line < macd_signal and (macd_signal - macd_line) > 0.05:
-                    signal_strength = 1
+                # PROFESSIONAL STANDARDS (Much Stricter)
+                # Bullish conditions - RARE and STRONG setups only
+                if rsi < 25 and macd_line > macd_signal and (macd_line - macd_signal) > 0.15:
+                    signal_strength = 2  # EXCEPTIONAL: Extreme oversold + strong momentum
+                elif rsi < 30 and macd_line > macd_signal and (macd_line - macd_signal) > 0.10:
+                    signal_strength = 1  # STRONG: Strong oversold + good momentum
+                # Bearish conditions - RARE and STRONG setups only  
+                elif rsi > 75 and macd_line < macd_signal and (macd_signal - macd_line) > 0.15:
+                    signal_strength = -2  # EXCEPTIONAL: Extreme overbought + strong momentum
+                elif rsi > 70 and macd_line < macd_signal and (macd_signal - macd_line) > 0.10:
+                    signal_strength = -1  # STRONG: Strong overbought + good momentum
+                # Moderate conditions (much higher bar)
+                elif rsi < 35 and macd_line > macd_signal and (macd_line - macd_signal) > 0.05:
+                    signal_strength = 0.5  # MODERATE bullish
+                elif rsi > 65 and macd_line < macd_signal and (macd_signal - macd_line) > 0.05:
+                    signal_strength = -0.5  # MODERATE bearish
                 
                 bullish_timeframes += signal_strength
             
             if total_timeframes > 0:
                 scores['technical_score'] = min(100, (bullish_timeframes / (total_timeframes * 2)) * 100)
+        
+        # HFT Microstructure Score (0-100 based on real-time order book data)
+        if 'hft_microstructure' in analysis:
+            hft_data = analysis['hft_microstructure']
+            hft_score = hft_data.get('score', 0)
+            
+            # Convert HFT score from -100/+100 to 0-100 scale
+            normalized_hft_score = (hft_score + 100) / 2
+            scores['hft_microstructure_score'] = max(0, min(100, normalized_hft_score))
+            
+            # Log HFT integration
+            logger.info(f"HFT Score integrated: {hft_score} -> normalized: {scores['hft_microstructure_score']}")
+        
+        # Sentiment Accumulation Score (0-100 based on contrarian accumulation opportunities)
+        if 'sentiment_analysis' in analysis and 'error' not in analysis['sentiment_analysis']:
+            sentiment_data = analysis['sentiment_analysis']
+            accumulation_implications = sentiment_data.get('accumulation_implications', {})
+            
+            # Use accumulation score from sentiment analysis (already 0-100)
+            sentiment_score = accumulation_implications.get('accumulation_score', 50)
+            scores['sentiment_accumulation_score'] = max(0, min(100, sentiment_score))
+            
+            # Log sentiment integration
+            logger.info(f"Sentiment Score integrated: {sentiment_score} (F&G: {sentiment_data.get('fear_greed_index', 'N/A')})")
         
         # OBV Divergence Bonus (0-10 points for smart money signals)
         if 'multi_timeframe_analysis' in analysis:
@@ -451,11 +617,15 @@ class UltimateCryptoAnalyzer:
         dca_score = self._calculate_dca_score(analysis)
         scores['dca_timing_score'] = dca_score
         
-        # Calculate composite score with enhanced bonuses
+        # Calculate composite score with enhanced bonuses including sentiment
+        hft_score = scores['hft_microstructure_score']
+        sentiment_score = scores['sentiment_accumulation_score']
         composite = (
             mtf_score * weights['multi_timeframe'] +
             vp_score * weights['volume_profile'] +
             tech_score * weights['technical'] +
+            sentiment_score * weights['sentiment_accumulation'] +
+            hft_score * weights['hft_microstructure'] +
             scores['confluence_bonus'] +
             scores['obv_divergence_bonus'] +
             scores['fibonacci_level_bonus'] +
@@ -466,9 +636,43 @@ class UltimateCryptoAnalyzer:
             'composite_score': round(min(100, max(0, composite)), 1),
             'component_scores': scores,
             'weights_used': weights,
-            'confidence_level': 'HIGH' if scores['confluence_bonus'] > 10 else 'MODERATE' if scores['confluence_bonus'] > 5 else 'LOW',
+            'confidence_level': self._calculate_professional_confidence_level(composite, scores),
             'dca_analysis': self._generate_dca_recommendations(analysis, dca_score)
         }
+    
+    def _calculate_professional_confidence_level(self, composite_score: float, scores: Dict) -> str:
+        """
+        Calculate professional confidence levels with STRICT requirements
+        Most setups should be LOW/MODERATE confidence
+        """
+        
+        # Professional confidence requirements (MUCH stricter)
+        confluence_bonus = scores.get('confluence_bonus', 0)
+        obv_divergence = abs(scores.get('obv_divergence_bonus', 0))
+        fibonacci_bonus = scores.get('fibonacci_level_bonus', 0)
+        
+        # Count strong confluence factors
+        strong_factors = 0
+        if confluence_bonus >= 15:  # Strong multi-system agreement
+            strong_factors += 1
+        if obv_divergence >= 6:    # Strong smart money divergence  
+            strong_factors += 1
+        if fibonacci_bonus >= 4:   # Key Fibonacci level proximity
+            strong_factors += 1
+        if composite_score >= 85:  # Exceptional raw score
+            strong_factors += 1
+            
+        # PROFESSIONAL confidence levels (most setups = LOW/MODERATE)
+        if strong_factors >= 3 and composite_score >= 90:
+            return 'EXCEPTIONAL'    # 95%+ - Maybe 1-2 per month
+        elif strong_factors >= 2 and composite_score >= 80:
+            return 'HIGH'          # 85%+ - Maybe 1-2 per week  
+        elif strong_factors >= 1 and composite_score >= 65:
+            return 'MODERATE'      # 70%+ - Few per week
+        elif composite_score >= 45:
+            return 'LOW'           # 55%+ - Most setups fall here
+        else:
+            return 'TRASH'         # <45% - No tradeable setup
     
     def _generate_enhanced_signals(self, analysis: Dict) -> Dict:
         """
@@ -1089,6 +1293,96 @@ Base your recommendations on this comprehensive dataset including volume profile
                 'position_size': "N/A",
                 'reasoning': "Unable to calculate DCA recommendations",
                 'risk_level': 'HIGH'
+            }
+    
+    def _analyze_accumulation_sentiment(self, sentiment_data: SentimentData) -> Dict:
+        """
+        Analyze sentiment data for accumulation strategy implications
+        """
+        try:
+            # Fear & Greed contrarian analysis for accumulation
+            fear_greed = sentiment_data.fear_greed_index
+            
+            # Contrarian accumulation scoring (fear = opportunity)
+            if fear_greed <= 20:
+                fear_greed_signal = "EXTREME_FEAR_BUY"
+                fear_greed_score = 90
+                fear_greed_reason = "Extreme fear creates excellent accumulation opportunities"
+            elif fear_greed <= 35:
+                fear_greed_signal = "FEAR_BUY"  
+                fear_greed_score = 75
+                fear_greed_reason = "Fear levels suggest good accumulation entry"
+            elif fear_greed <= 45:
+                fear_greed_signal = "NEUTRAL_ACCUMULATE"
+                fear_greed_score = 60
+                fear_greed_reason = "Neutral sentiment allows steady accumulation"
+            elif fear_greed <= 65:
+                fear_greed_signal = "CAUTION"
+                fear_greed_score = 40
+                fear_greed_reason = "Rising greed suggests reducing accumulation pace"
+            elif fear_greed <= 80:
+                fear_greed_signal = "GREED_REDUCE"
+                fear_greed_score = 25
+                fear_greed_reason = "Greed levels suggest pausing accumulation"
+            else:
+                fear_greed_signal = "EXTREME_GREED_STOP"
+                fear_greed_score = 10
+                fear_greed_reason = "Extreme greed - avoid accumulation, consider taking profits"
+            
+            # Funding rate analysis for accumulation timing
+            funding_rate = abs(sentiment_data.funding_rate)
+            
+            if funding_rate >= 0.1:  # 0.1% or higher
+                funding_signal = "EXTREME_FUNDING"
+                funding_score = 85 if sentiment_data.funding_rate < 0 else 15
+                funding_reason = "Extreme funding creates accumulation opportunity" if sentiment_data.funding_rate < 0 else "Extreme positive funding - avoid accumulation"
+            elif funding_rate >= 0.05:
+                funding_signal = "HIGH_FUNDING" 
+                funding_score = 70 if sentiment_data.funding_rate < 0 else 30
+                funding_reason = "High negative funding favors accumulation" if sentiment_data.funding_rate < 0 else "High positive funding suggests caution"
+            else:
+                funding_signal = "NORMAL_FUNDING"
+                funding_score = 50
+                funding_reason = "Normal funding rates - neutral for accumulation timing"
+            
+            # Overall accumulation sentiment score (weighted)
+            accumulation_score = (fear_greed_score * 0.7) + (funding_score * 0.3)
+            
+            # Accumulation recommendation
+            if accumulation_score >= 80:
+                accumulation_rec = "STRONG_ACCUMULATE"
+            elif accumulation_score >= 65:
+                accumulation_rec = "ACCUMULATE"
+            elif accumulation_score >= 45:
+                accumulation_rec = "NEUTRAL"
+            elif accumulation_score >= 30:
+                accumulation_rec = "REDUCE_ACCUMULATION" 
+            else:
+                accumulation_rec = "PAUSE_ACCUMULATION"
+            
+            return {
+                'fear_greed_analysis': {
+                    'signal': fear_greed_signal,
+                    'score': fear_greed_score,
+                    'reasoning': fear_greed_reason
+                },
+                'funding_analysis': {
+                    'signal': funding_signal, 
+                    'score': funding_score,
+                    'reasoning': funding_reason
+                },
+                'accumulation_score': round(accumulation_score, 1),
+                'accumulation_recommendation': accumulation_rec,
+                'contrarian_opportunity': fear_greed <= 35,  # Fear creates opportunity
+                'social_sentiment_trend': sentiment_data.social_sentiment,
+                'overall_sentiment_trend': sentiment_data.overall_sentiment
+            }
+            
+        except Exception as e:
+            return {
+                'error': f"Failed to analyze accumulation sentiment: {str(e)}",
+                'accumulation_score': 50,
+                'accumulation_recommendation': "NEUTRAL"
             }
 
 def main():

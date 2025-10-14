@@ -1015,6 +1015,184 @@ Sources: {', '.join(zone['sources'][:3])}{"..." if len(zone['sources']) > 3 else
                     prompt += f"""
 - {level_type.replace('_', ' ').title()}: {level_list}"""
     
+    # Add HFT microstructure analysis if available
+    hft_analysis = analysis.get('hft_microstructure', {})
+    if hft_analysis:
+        hft_signal = hft_analysis.get('signal', 'NEUTRAL')
+        hft_score = hft_analysis.get('score', 0)
+        confidence = hft_analysis.get('confidence', 'LOW')
+        timeframe = hft_analysis.get('timeframe', 'N/A')
+        
+        # Signal emoji mapping
+        signal_emoji = {
+            'STRONG_BUY': '🟢', 'MODERATE_BUY': '🔵', 'NEUTRAL': '⚪',
+            'MODERATE_SELL': '🟠', 'STRONG_SELL': '🔴'
+        }
+        
+        confidence_emoji = {'HIGH': '🎯', 'MEDIUM': '📊', 'LOW': '⚠️'}
+        
+        prompt += f"""
+
+### 🔥 HFT MICROSTRUCTURE ANALYSIS (REAL-TIME)
+- **Signal**: {signal_emoji.get(hft_signal, '⚪')} **{hft_signal}** ({hft_score:+.1f}/100)
+- **Confidence**: {confidence_emoji.get(confidence, '📊')} **{confidence}** | **Duration**: {timeframe}"""
+        
+        # Order book components
+        components = hft_analysis.get('components', {})
+        if components:
+            prompt += f"""
+- **L3 Imbalance**: {components.get('l3_imbalance', 'N/A')} (EMA: {components.get('imbalance_ema', 'N/A')})
+- **Bid/Ask Ratio**: {components.get('bid_ask_ratio', 'N/A'):.3f} ({components.get('total_bids', 'N/A')} bids / {components.get('total_asks', 'N/A')} asks)"""
+        
+        # HFT alerts
+        alerts = hft_analysis.get('alerts', [])
+        if alerts:
+            prompt += """
+
+**⚠️ HFT ALERTS**:"""
+            for alert in alerts:
+                prompt += f"""
+- {alert}"""
+        
+        # Alignment analysis with technical signals
+        alignment = hft_analysis.get('alignment_analysis', {})
+        if alignment:
+            alignment_type = alignment.get('alignment', {}).get('type', 'UNKNOWN')
+            position_modifier = alignment.get('position_size_modifier', 1.0)
+            timing_advice = alignment.get('entry_timing_advice', 'Follow technical analysis')
+            
+            prompt += f"""
+
+**🎯 HFT-TECHNICAL ALIGNMENT**: {alignment_type}
+- **Position Size Modifier**: {position_modifier:.1f}x normal
+- **Entry Timing**: {timing_advice}"""
+            
+            recommendations = alignment.get('recommendations', [])
+            if recommendations:
+                prompt += """
+- **HFT Recommendations**:"""
+                for rec in recommendations[:3]:  # Show top 3
+                    prompt += f"""
+  • {rec}"""
+    
+    # Add sentiment analysis section
+    sentiment_analysis = analysis.get('sentiment_analysis', {})
+    if sentiment_analysis and 'error' not in sentiment_analysis:
+        prompt += f"""
+
+### 🎭 SENTIMENT & ACCUMULATION ANALYSIS (Current: {format_price(current_price)} | COMPLETE)
+- **Fear & Greed Index**: {sentiment_analysis.get('fear_greed_index', 'N/A')}/100 ({sentiment_analysis.get('fear_greed_classification', 'NEUTRAL')})
+- **Overall Sentiment**: {sentiment_analysis.get('overall_sentiment', 'NEUTRAL')}
+- **Social Sentiment**: {sentiment_analysis.get('social_sentiment', 'NEUTRAL')}
+- **Funding Rate**: {sentiment_analysis.get('funding_rate', 0):.4f}% ({sentiment_analysis.get('funding_sentiment', 'NEUTRAL')})
+
+**💎 ACCUMULATION ANALYSIS**:"""
+        
+        accumulation_implications = sentiment_analysis.get('accumulation_implications', {})
+        if accumulation_implications and 'error' not in accumulation_implications:
+            acc_score = accumulation_implications.get('accumulation_score', 50)
+            acc_rec = accumulation_implications.get('accumulation_recommendation', 'NEUTRAL')
+            contrarian_opp = accumulation_implications.get('contrarian_opportunity', False)
+            
+            prompt += f"""
+- **Accumulation Score**: {acc_score}/100
+- **Accumulation Recommendation**: {acc_rec}
+- **Contrarian Opportunity**: {'YES - Fear creates buying opportunity' if contrarian_opp else 'NO - Wait for better sentiment'}
+
+**Fear & Greed Analysis**:"""
+            
+            fear_greed_analysis = accumulation_implications.get('fear_greed_analysis', {})
+            if fear_greed_analysis:
+                prompt += f"""
+- **Signal**: {fear_greed_analysis.get('signal', 'NEUTRAL')}
+- **Score**: {fear_greed_analysis.get('score', 50)}/100
+- **Reasoning**: {fear_greed_analysis.get('reasoning', 'No analysis available')}"""
+            
+            funding_analysis = accumulation_implications.get('funding_analysis', {})
+            if funding_analysis:
+                prompt += f"""
+
+**Funding Rate Analysis**:
+- **Signal**: {funding_analysis.get('signal', 'NEUTRAL')}
+- **Score**: {funding_analysis.get('score', 50)}/100
+- **Reasoning**: {funding_analysis.get('reasoning', 'No analysis available')}"""
+            
+            prompt += f"""
+
+**🎯 SENTIMENT SUMMARY**: {sentiment_analysis.get('overall_sentiment', 'NEUTRAL')} sentiment with {acc_rec.lower().replace('_', ' ')} accumulation conditions."""
+    
+    # Add multi-horizon accumulation analysis
+    accumulation_analysis = analysis.get('accumulation_analysis', {})
+    if accumulation_analysis and 'error' not in accumulation_analysis:
+        prompt += f"""
+
+### 💎 MULTI-HORIZON ACCUMULATION RECOMMENDATIONS (Current: {format_price(current_price)} | COMPLETE)
+
+**🕐 TIME HORIZON SCORES:**
+- **1-Month Accumulation**: {accumulation_analysis.get('one_month_score', 50):.1f}/100 ({accumulation_analysis.get('one_month_recommendation', 'NEUTRAL')})
+- **6-Month Accumulation**: {accumulation_analysis.get('six_month_score', 50):.1f}/100 ({accumulation_analysis.get('six_month_recommendation', 'NEUTRAL')})
+- **1-Year+ Accumulation**: {accumulation_analysis.get('one_year_plus_score', 50):.1f}/100 ({accumulation_analysis.get('one_year_plus_recommendation', 'NEUTRAL')})
+
+**📊 COMPONENT FACTOR SCORES:**"""
+        
+        technical_factors = accumulation_analysis.get('technical_factors', {})
+        sentiment_factors = accumulation_analysis.get('sentiment_factors', {})
+        fundamental_factors = accumulation_analysis.get('fundamental_factors', {})
+        
+        if technical_factors:
+            prompt += f"""
+- **Technical Factors**: 1M:{technical_factors.get('1_month', 50):.1f} | 6M:{technical_factors.get('6_month', 50):.1f} | 1Y+:{technical_factors.get('1_year_plus', 50):.1f}"""
+        
+        if sentiment_factors:
+            prompt += f"""
+- **Sentiment Factors**: 1M:{sentiment_factors.get('1_month', 50):.1f} | 6M:{sentiment_factors.get('6_month', 50):.1f} | 1Y+:{sentiment_factors.get('1_year_plus', 50):.1f}"""
+        
+        if fundamental_factors:
+            prompt += f"""
+- **Fundamental Factors**: 1M:{fundamental_factors.get('1_month', 50):.1f} | 6M:{fundamental_factors.get('6_month', 50):.1f} | 1Y+:{fundamental_factors.get('1_year_plus', 50):.1f}"""
+        
+        dca_strategies = accumulation_analysis.get('dca_strategies', {})
+        if dca_strategies:
+            prompt += f"""
+
+**💰 DCA STRATEGY RECOMMENDATIONS:**"""
+            
+            for horizon, strategy in dca_strategies.items():
+                horizon_display = horizon.replace('_', '-').title()
+                if horizon_display == '1-Year-Plus':
+                    horizon_display = '1-Year+'
+                    
+                prompt += f"""
+- **{horizon_display}**: {strategy.get('frequency', 'N/A')} @ {strategy.get('allocation_per_entry', 'N/A')} per entry ({strategy.get('confidence', 'UNKNOWN')} confidence)"""
+        
+        entry_zones = accumulation_analysis.get('entry_zones', {})
+        if entry_zones:
+            prompt += f"""
+
+**🎯 OPTIMAL ENTRY ZONES:**"""
+            
+            # 1-Month zones
+            one_month_zones = entry_zones.get('1_month', {})
+            if one_month_zones:
+                prompt += f"""
+- **1-Month**: Primary: {one_month_zones.get('primary_zone', 'N/A')} | Secondary: {one_month_zones.get('secondary_zone', 'N/A')}"""
+            
+            # 6-Month zones  
+            six_month_zones = entry_zones.get('6_month', {})
+            if six_month_zones:
+                prompt += f"""
+- **6-Month**: Primary: {six_month_zones.get('primary_zone', 'N/A')} | Aggressive: {six_month_zones.get('aggressive_zone', 'N/A')}"""
+            
+            # 1-Year+ zones
+            one_year_zones = entry_zones.get('1_year_plus', {})
+            if one_year_zones:
+                prompt += f"""
+- **1-Year+**: Value Zone: {one_year_zones.get('value_zone', 'N/A')} | Opportunity: {one_year_zones.get('opportunity_zone', 'N/A')}"""
+        
+        prompt += f"""
+
+**🎯 ACCUMULATION SUMMARY**: Based on multi-factor analysis, this asset shows strongest accumulation potential for **{max(accumulation_analysis, key=lambda x: accumulation_analysis.get(f'{x}_score', 0) if x.endswith('_score') else 0).replace('_score', '').replace('_', '-').title() if any(x.endswith('_score') for x in accumulation_analysis) else 'Unknown'}** time horizon."""
+    
     # Add ultimate score breakdown
     if ultimate_score:
         prompt += f"""
@@ -1083,20 +1261,28 @@ As a **Senior Institutional Trader** with access to this COMPLETE dataset (100% 
 - VWAP relationship and institutional signals
 - Fibonacci confluence zones identification
 
-### 4. **Signal Integration & Probability Assessment**
+### 4. **HFT Microstructure Analysis Integration** 
+- Real-time order book imbalance interpretation
+- HFT signal alignment with multi-timeframe technical bias
+- Institutional order flow direction and strength assessment
+- Entry timing optimization using microstructure data
+- Short-term momentum shift detection (1-15 minute windows)
+
+### 5. **Signal Integration & Probability Assessment**
 - Cross-timeframe signal alignment analysis
 - Volume confirmation of technical signals
+- HFT-technical confluence analysis
 - Success probability for directional trades
 - Expected holding period for different strategies
 
-### 5. **Risk-Adjusted Trading Strategy Framework**
+### 6. **Risk-Adjusted Trading Strategy Framework**
 - Position sizing based on volatility and confluence scores
 - Multi-timeframe entry/exit protocol with risk management
 - Portfolio allocation recommendations (% of total capital)
 - Stop-loss placement using volume profile and technical levels
 - Risk-reward optimization across different market conditions
 
-### 6. **DCA Strategy Calculation & Justification**
+### 7. **DCA Strategy Calculation & Justification**
 **REQUIRED**: Provide detailed calculation breakdown for the DCA score and explain:
 - How volatility metrics (ATR %, BB squeeze) contribute to the score
 - Impact of confluence uncertainty on DCA timing favorability
@@ -1105,7 +1291,50 @@ As a **Senior Institutional Trader** with access to this COMPLETE dataset (100% 
 - Market condition factors supporting/opposing systematic accumulation
 - Expected performance scenarios under different market volatility regimes
 
-### 7. **Comprehensive Monitoring Protocol**
+### 8. **Sentiment Analysis & Market Psychology Integration**
+**REQUIRED**: Analyze sentiment data for accumulation and trading implications:
+- Fear & Greed Index contrarian analysis (extreme fear = opportunity, extreme greed = caution)
+- Social sentiment trends and momentum implications for price direction
+- Funding rate analysis for positioning bias (negative funding = bullish contrarian signal)
+- Overall sentiment score interpretation for accumulation timing
+- Contrarian opportunity identification based on sentiment extremes
+- Integration of sentiment signals with technical analysis for enhanced confidence
+- Market cycle positioning based on sentiment indicators
+
+### 9. **Multi-Horizon Accumulation Analysis**
+**MANDATORY**: Provide specific buy-and-hold recommendations for different time horizons:
+
+**1-MONTH ACCUMULATION STRATEGY:**
+- Technical setup quality for 30-day hold periods
+- Sentiment positioning for short-term accumulation
+- Risk factors that could affect 1-month performance
+- Recommended position sizing for 30-day timeline
+- Expected price range and exit criteria
+- DCA frequency recommendations (daily/weekly)
+
+**6-MONTH ACCUMULATION STRATEGY:**
+- Medium-term fundamental factors supporting accumulation
+- Technical trend sustainability over 6-month periods
+- Seasonal factors and market cycle considerations
+- Portfolio allocation recommendations for 6-month holds
+- Major support/resistance levels for 6-month timeline
+- Risk management for medium-term positions
+
+**1-YEAR+ LONG-TERM ACCUMULATION:**
+- Fundamental analysis supporting long-term accumulation
+- Major trend direction and sustainability factors
+- Regulatory and adoption catalysts affecting long-term value
+- Strategic accumulation zones for maximum long-term benefit
+- Long-term risk assessment and mitigation strategies
+- Exit strategy for multi-year positions
+
+**ACCUMULATION SCORING MATRIX:**
+Provide specific scores (0-100) for each horizon:
+- 1-Month Accumulation Score: X/100 (STRONG BUY/BUY/NEUTRAL/AVOID)
+- 6-Month Accumulation Score: X/100 (STRONG BUY/BUY/NEUTRAL/AVOID)  
+- 1-Year+ Accumulation Score: X/100 (STRONG BUY/BUY/NEUTRAL/AVOID)
+
+### 10. **Comprehensive Monitoring Protocol**
 - Key levels to watch for trend continuation/reversal
 - Volume confirmation signals to monitor
 - Timeframe-specific exit triggers
@@ -1125,10 +1354,12 @@ This executive brief must be actionable for immediate trading decisions and addr
 **MANDATORY**: Provide distinct trading strategies for each time horizon with specific parameters:
 
 **1. SCALPING STRATEGY (1-5m timeframes):**
-- Entry zones with 0.1-0.5% precision
+- Entry zones with 0.1-0.5% precision (HFT-optimized timing)
+- HFT signal confirmation for entry/exit timing
 - Stop loss levels (typically 0.2-1% max)
 - Profit targets in 15-60 minute windows
 - Volume confirmation requirements
+- Real-time order book imbalance validation
 - Maximum position size recommendations
 
 **2. SWING STRATEGY (4h-1d timeframes):**
