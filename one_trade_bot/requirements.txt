@@ -1,0 +1,14 @@
+# One Good Trade Per Day Bot - Dependencies
+# Minimal requirements for maximum reliability
+
+ccxt>=4.0.0          # Exchange connectivity
+pandas>=2.0.0        # Data manipulation  
+numpy>=1.24.0        # Numerical operations
+ta>=0.10.2           # Technical analysis indicators
+pyyaml>=6.0          # Configuration management
+schedule>=1.2.0      # Daily execution timing
+sqlite3              # Trade logging (built-in)
+
+# Optional but recommended
+requests>=2.30.0     # HTTP requests for news/data
+python-dateutil>=2.8.2  # Date handling

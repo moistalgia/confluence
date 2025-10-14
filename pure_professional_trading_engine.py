@@ -133,6 +133,14 @@ class PureProfessionalTradingEngine:
         real_market_data = getattr(self, '_cached_market_data', {}).get(signal.symbol)
         
         if real_market_data:
+            # VALIDATE REAL DATA INTEGRITY - NO FALLBACKS ALLOWED
+            required_volume_fields = ['current_volume', 'avg_volume_20', 'volume_ratio']
+            for field in required_volume_fields:
+                if real_market_data.get(field) is None:
+                    logger.error(f"🚨 MISSING REAL DATA: {field} is None for {signal.symbol}")
+                    logger.error(f"🚨 REFUSING to use fallback data - trading will be skipped")
+                    raise ValueError(f"Missing real market data field: {field} for {signal.symbol}")
+            
             # Use real calculated indicators
             return MarketData(
                 symbol=signal.symbol,
@@ -155,62 +163,20 @@ class PureProfessionalTradingEngine:
                 ema_9=real_market_data.get('ema_9', current_price),
                 ema_21=real_market_data.get('ema_21', current_price),
                 
-                # Real volume data
-                current_volume=real_market_data.get('current_volume', 100000.0),
-                avg_volume_20=real_market_data.get('avg_volume_20', 100000.0),
-                volume_ratio=real_market_data.get('volume_ratio', 1.0),
+                # STRICT REAL VOLUME DATA - NO FALLBACKS ALLOWED
+                current_volume=real_market_data.get('current_volume'),  # Must be real data
+                avg_volume_20=real_market_data.get('avg_volume_20'),    # Must be real data
+                volume_ratio=real_market_data.get('volume_ratio'),      # Must be real data
                 
                 # Multi-timeframe data (optional)
                 timeframe_data=real_market_data.get('timeframe_data', {})
             )
         else:
-            # Fallback to reasonable estimates based on recent analysis patterns
-            # At least make the RSI realistic based on signal direction and BB position
-            estimated_rsi = 65.0 if signal.action == 'SELL' else 35.0
-            
-            # Add some variation to avoid perfect mock data
-            bb_spread = current_price * 0.03  # 3% spread
-            bb_upper = current_price + bb_spread
-            bb_lower = current_price - bb_spread
-            bb_middle = current_price
-            
-            # Calculate a more realistic BB position based on signal
-            if signal.action == 'BUY':
-                bb_position = 0.2  # Near lower band for buy signals
-                adjusted_price = bb_lower + (bb_spread * 0.4)
-            else:
-                bb_position = 0.8  # Near upper band for sell signals  
-                adjusted_price = bb_lower + (bb_spread * 1.6)
-            
-            return MarketData(
-                symbol=signal.symbol,
-                current_price=current_price,
-                timestamp=signal.timestamp,
-                
-                # More realistic estimated indicators
-                rsi=estimated_rsi,
-                macd=0.0,
-                macd_signal=0.0,
-                bb_upper=bb_upper,
-                bb_lower=bb_lower,
-                bb_middle=bb_middle,
-                stoch=estimated_rsi,  # Use similar value to RSI
-                
-                # Moving averages with slight variations
-                sma_20=current_price * 1.001,
-                sma_50=current_price * 1.002,
-                sma_200=current_price * 1.005,
-                ema_9=current_price * 0.999,
-                ema_21=current_price * 1.001,
-                
-                # Volume data with some variation
-                current_volume=125000.0,
-                avg_volume_20=100000.0,
-                volume_ratio=1.25,  # Slightly above average
-                
-                # Multi-timeframe data (optional)
-                timeframe_data={}
-            )
+            # STRICT POLICY: NO FALLBACK DATA ALLOWED
+            logger.error(f"🚨 NO REAL MARKET DATA available for {signal.symbol}")
+            logger.error(f"🚨 REFUSING to generate synthetic market data")
+            logger.error(f"🚨 Trading requires authentic market analysis - skipping signal")
+            raise ValueError(f"No real market data available for {signal.symbol} - cannot proceed with synthetic data")
     
     def cache_market_data(self, symbol: str, market_data: dict):
         """Cache real market data for validation use"""
@@ -218,24 +184,100 @@ class PureProfessionalTradingEngine:
             self._cached_market_data = {}
         self._cached_market_data[symbol] = market_data
         
-    def calculate_position_size(self, symbol: str, entry_price: float, stop_loss: float) -> float:
-        """Calculate position size based on risk management with minimum viable trade logic"""
+    def calculate_position_size(self, symbol: str, entry_price: float, stop_loss: float, 
+                              accumulation_data: dict = None, sentiment_data: dict = None) -> float:
+        """Enhanced position size calculation using accumulation scores and sentiment analysis"""
         try:
             portfolio_summary = self.get_portfolio_summary()
             available_cash = portfolio_summary['cash']
             
-            # Maximum risk per trade (2% of portfolio)
-            max_risk = portfolio_summary['total_value'] * 0.02
+            # Base maximum risk per trade (2% of portfolio)
+            base_max_risk_pct = 0.02
+            
+            # 🎯 ENHANCED POSITION SIZING WITH ACCUMULATION SCORING
+            position_size_multiplier = 1.0
+            risk_adjustment_reasons = []
+            
+            if accumulation_data:
+                # Extract accumulation scores
+                acc_1m = accumulation_data.get('one_month_score', 50)
+                acc_6m = accumulation_data.get('six_month_score', 50)
+                acc_1y = accumulation_data.get('one_year_plus_score', 50)
+                
+                # Calculate average accumulation score
+                avg_accumulation = (acc_1m + acc_6m + acc_1y) / 3
+                
+                logger.info(f"   📊 Accumulation scores: 1M:{acc_1m:.1f} | 6M:{acc_6m:.1f} | 1Y+:{acc_1y:.1f} | Avg:{avg_accumulation:.1f}")
+                
+                # Adjust position sizing based on accumulation strength
+                if avg_accumulation >= 70:  # Strong accumulation opportunity
+                    position_size_multiplier *= 1.4  # +40% position size
+                    risk_adjustment_reasons.append(f"Strong accumulation setup ({avg_accumulation:.1f}): +40% size")
+                elif avg_accumulation >= 60:  # Good accumulation
+                    position_size_multiplier *= 1.2  # +20% position size
+                    risk_adjustment_reasons.append(f"Good accumulation setup ({avg_accumulation:.1f}): +20% size")
+                elif avg_accumulation >= 50:  # Neutral
+                    # No adjustment
+                    risk_adjustment_reasons.append(f"Neutral accumulation ({avg_accumulation:.1f}): standard size")
+                elif avg_accumulation >= 40:  # Poor accumulation
+                    position_size_multiplier *= 0.8  # -20% position size
+                    risk_adjustment_reasons.append(f"Poor accumulation setup ({avg_accumulation:.1f}): -20% size")
+                else:  # Very poor accumulation
+                    position_size_multiplier *= 0.6  # -40% position size
+                    risk_adjustment_reasons.append(f"Weak accumulation setup ({avg_accumulation:.1f}): -40% size")
+                
+                # Special weighting for multi-horizon strength
+                horizon_strength = 0
+                if acc_1m >= 60: horizon_strength += 1
+                if acc_6m >= 60: horizon_strength += 1
+                if acc_1y >= 60: horizon_strength += 1
+                
+                if horizon_strength >= 2:  # Strong across multiple horizons
+                    position_size_multiplier *= 1.1  # Additional +10%
+                    risk_adjustment_reasons.append(f"Multi-horizon strength ({horizon_strength}/3): +10% bonus")
+            
+            # 🎭 SENTIMENT-BASED POSITION ADJUSTMENTS
+            if sentiment_data:
+                fear_greed = sentiment_data.get('fear_greed_index', 50)
+                overall_sentiment = sentiment_data.get('overall_sentiment', 'NEUTRAL')
+                
+                logger.info(f"   🎭 Sentiment: {overall_sentiment} (F&G: {fear_greed}/100)")
+                
+                # Contrarian sentiment adjustments (fear = opportunity)
+                if fear_greed <= 25:  # Extreme fear
+                    position_size_multiplier *= 1.3  # +30% in extreme fear
+                    risk_adjustment_reasons.append(f"Extreme fear opportunity (F&G:{fear_greed}): +30% size")
+                elif fear_greed <= 35:  # Fear
+                    position_size_multiplier *= 1.15  # +15% in fear
+                    risk_adjustment_reasons.append(f"Fear-based opportunity (F&G:{fear_greed}): +15% size")
+                elif fear_greed >= 75:  # Extreme greed
+                    position_size_multiplier *= 0.7  # -30% in extreme greed
+                    risk_adjustment_reasons.append(f"Extreme greed caution (F&G:{fear_greed}): -30% size")
+                elif fear_greed >= 65:  # Greed
+                    position_size_multiplier *= 0.85  # -15% in greed
+                    risk_adjustment_reasons.append(f"Greed-based caution (F&G:{fear_greed}): -15% size")
+            
+            # Apply multiplier bounds (0.5x to 2.0x maximum)
+            position_size_multiplier = max(0.5, min(2.0, position_size_multiplier))
+            
+            # Calculate adjusted maximum risk
+            adjusted_max_risk_pct = base_max_risk_pct * position_size_multiplier
+            max_risk = portfolio_summary['total_value'] * adjusted_max_risk_pct
+            
+            logger.info(f"   💰 Position sizing: Base risk {base_max_risk_pct:.1%} → Adjusted risk {adjusted_max_risk_pct:.1%} (×{position_size_multiplier:.2f})")
+            for reason in risk_adjustment_reasons:
+                logger.info(f"      🔧 {reason}")
             
             # Calculate risk per unit
             risk_per_unit = abs(entry_price - stop_loss)
             
             if risk_per_unit > 0:
-                # Calculate position size based on risk
+                # Calculate position size based on adjusted risk
                 position_size = max_risk / risk_per_unit
                 
-                # Don't exceed 10% of portfolio value per trade
-                max_position_value = portfolio_summary['total_value'] * 0.10
+                # Don't exceed 15% of portfolio value per trade (increased for high-conviction trades)
+                max_position_pct = min(0.15, 0.08 + (position_size_multiplier - 1.0) * 0.05)  # 8-15% range
+                max_position_value = portfolio_summary['total_value'] * max_position_pct
                 max_position_size = max_position_value / entry_price
                 
                 # Use the smaller of the two
@@ -348,8 +390,25 @@ class PureProfessionalTradingEngine:
             size_multiplier = validation_result.get('execution_size_multiplier', 1.0)
             
             if result.value in ['EXECUTE', 'APPROVED', 'MARGINAL']:
-                # Calculate position size based on risk management
-                base_position_size = self.calculate_position_size(signal.symbol, signal.entry_price, signal.stop_loss)
+                # Extract accumulation and sentiment data from cached market data
+                accumulation_data = getattr(market_data, 'accumulation_data', None) or \
+                                   (hasattr(market_data, 'timeframe_data') and 
+                                    isinstance(market_data.timeframe_data, dict) and 
+                                    market_data.timeframe_data.get('accumulation_data'))
+                
+                sentiment_data = getattr(market_data, 'sentiment_data', None) or \
+                                (hasattr(market_data, 'timeframe_data') and 
+                                 isinstance(market_data.timeframe_data, dict) and 
+                                 market_data.timeframe_data.get('sentiment_data'))
+                
+                # Calculate enhanced position size with accumulation and sentiment factors
+                base_position_size = self.calculate_position_size(
+                    signal.symbol, 
+                    signal.entry_price, 
+                    signal.stop_loss, 
+                    accumulation_data, 
+                    sentiment_data
+                )
                 position_size = base_position_size * size_multiplier
                 
                 if position_size > 0:
@@ -563,35 +622,9 @@ class PureProfessionalTradingEngine:
             'stats': self.performance_stats
         }
     
-    def calculate_position_size(self, symbol: str, entry_price: float, stop_loss: float) -> float:
-        """Calculate position size based on risk management"""
-        try:
-            portfolio_data = self.portfolio.calculate_portfolio_value()
-            available_cash = portfolio_data['cash']
-            
-            # Calculate risk per share
-            risk_per_share = abs(entry_price - stop_loss)
-            
-            # Calculate max risk amount (% of portfolio)
-            max_risk_amount = portfolio_data['total_portfolio_value'] * self.config.max_risk_per_trade
-            
-            # Calculate position size based on risk
-            if risk_per_share > 0:
-                risk_based_size = max_risk_amount / risk_per_share
-            else:
-                risk_based_size = 0
-            
-            # Don't exceed available cash
-            cash_based_size = available_cash / entry_price * 0.95  # Leave 5% buffer
-            
-            # Use smaller of the two
-            position_size = min(risk_based_size, cash_based_size)
-            
-            return max(0, position_size)
-            
-        except Exception as e:
-            logger.error(f"Error calculating position size: {str(e)}")
-            return 0
+    def calculate_position_size_basic(self, symbol: str, entry_price: float, stop_loss: float) -> float:
+        """Calculate basic position size - this method is deprecated, use enhanced version"""
+        return self.calculate_position_size(symbol, entry_price, stop_loss)
 
     def can_place_new_position(self, symbol: str, size: float, price: float) -> Tuple[bool, str]:
         """Check if we can place a new position"""

@@ -42,7 +42,7 @@
       "max_daily_alerts": 10,
       "description": "Multiple timeframes showing strong bearish confluence",
       "created_at": "2025-10-12T00:09:39.116802",
-      "last_triggered": "2025-10-12T10:46:24.310404"
+      "last_triggered": "2025-10-14T16:24:21.686790"
     },
     {
       "id": "rsi_overbought_extreme",
@@ -153,7 +153,7 @@
       "max_daily_alerts": 10,
       "description": "Price breaking below key support level",
       "created_at": "2025-10-12T00:09:39.116807",
-      "last_triggered": "2025-10-14T14:52:29.148905"
+      "last_triggered": "2025-10-14T16:21:34.061635"
     },
     {
       "id": "resistance_break",
@@ -174,7 +174,7 @@
       "max_daily_alerts": 10,
       "description": "Price breaking above key resistance level",
       "created_at": "2025-10-12T00:09:39.116807",
-      "last_triggered": "2025-10-14T14:52:29.150995"
+      "last_triggered": "2025-10-14T16:21:34.063243"
     },
     {
       "id": "trend_reversal",
@@ -196,7 +196,7 @@
       "max_daily_alerts": 10,
       "description": "Multiple timeframes confirming trend reversal",
       "created_at": "2025-10-12T00:09:39.116808",
-      "last_triggered": "2025-10-14T14:52:29.153818"
+      "last_triggered": "2025-10-14T16:24:21.688338"
     }
   ]
 }

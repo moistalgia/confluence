@@ -1,0 +1,79 @@
+# One Good Trade Per Day Bot Configuration
+# 🎯 Edit these settings - NO code changes needed
+
+# EXCHANGE SETTINGS
+exchange:
+  name: "kraken"  # kraken, binance, coinbase
+  sandbox: true   # Use sandbox/testnet for testing
+  api_key: ""     # Your API key
+  secret: ""      # Your API secret
+  
+# TRADING PARAMETERS  
+trading:
+  account_balance: 10000    # Starting capital in USD
+  max_risk_per_trade: 0.01  # 1% risk per trade (0.01 = 1%)
+  max_position_pct: 0.10    # Max 10% of account per position
+  max_spread_pct: 0.003     # Max 0.3% bid-ask spread
+  max_positions: 1          # Only ONE position at a time
+  
+# WATCHLIST - Focus on liquid, trending assets
+watchlist:
+  - "BTC/USD"
+  - "ETH/USD"  
+  - "SOL/USD"
+  - "AVAX/USD"
+  - "HBAR/USD"
+
+# FILTER SETTINGS
+filters:
+  # Filter 1: Market Regime
+  regime:
+    min_trend_distance: 0.02    # 2% from SMA20 to be "trending"
+    max_atr_pct: 0.08           # 8% max ATR/price ratio
+    min_volume_ratio: 0.5       # 50% of 20-day average volume
+    max_bb_squeeze: 0.15        # Max BB squeeze threshold
+    min_checks_pass: 3          # Must pass 3/4 regime checks
+    
+  # Filter 2: Setup Scanner  
+  setup:
+    min_setup_score: 60         # Minimum 60/100 setup score
+    rsi_oversold_min: 30        # RSI must be >= 30
+    rsi_oversold_max: 45        # RSI must be <= 45
+    sma20_tolerance: 0.02       # Within 2% of SMA20 for pullback
+    volume_increase_min: 1.1    # 110% recent volume vs average
+    
+  # Filter 3: Confluence
+  confluence:
+    min_confluence_score: 50    # Minimum 50/80 confluence score
+    min_risk_reward: 2.0        # Minimum 2:1 risk:reward ratio
+    fib_tolerance: 0.015        # Within 1.5% of fib level
+    volume_profile_strength: 1.5 # 150% volume at current level
+    
+  # Filter 4: Risk Check
+  risk:
+    max_stop_distance_pct: 0.05 # Max 5% stop loss distance
+    min_liquidity_ratio: 0.0005 # Max 0.05% of daily volume
+    news_avoidance_hours: 4     # Avoid trades 4h before events
+
+# EXECUTION SETTINGS
+execution:
+  entry_timeout_hours: 4      # Cancel entry order after 4 hours
+  order_type: "limit"         # Always use limit orders
+  slippage_tolerance: 0.001   # 0.1% slippage tolerance
+
+# TIMING
+schedule:
+  scan_time: "08:00"          # UTC time for daily scan
+  timezone: "UTC"
+  
+# LOGGING
+logging:
+  level: "INFO"               # DEBUG, INFO, WARNING, ERROR
+  log_trades: true
+  log_scans: true
+  log_vetoes: true
+  
+# DATABASE  
+database:
+  path: "trades.db"
+  backup_days: 90             # Keep 90 days of history

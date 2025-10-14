@@ -279,143 +279,367 @@ class ProfessionalSignalValidator:
     
     def _check_indicator_confluence(self, signal: TradingSignal, 
                                   market_data: MarketData) -> Tuple[float, List[str]]:
-        """Check if multiple indicators agree with the signal"""
+        """Enhanced multi-timeframe indicator confluence check using Ultimate Analyzer data"""
         
         indicators_aligned = 0
         total_indicators = 0
         reasons = []
         
-        # Add current indicator values for transparency
-        reasons.append(f"RSI: {market_data.rsi:.1f} | MACD: {market_data.macd:.4f}")
-        reasons.append(f"Stoch: {market_data.stoch:.1f} | BB Position: {market_data.get_bb_position():.2f}")
+        # Check if we have multi-timeframe data from Ultimate Analyzer
+        has_ultimate_data = (hasattr(market_data, 'timeframe_data') and 
+                            market_data.timeframe_data and 
+                            isinstance(market_data.timeframe_data, dict))
         
-        if signal.action == "BUY":
-            # RSI oversold check
-            if market_data.rsi < 35:
-                indicators_aligned += 1
-                reasons.append(f"✓ RSI oversold at {market_data.rsi:.1f} (<35)")
-            else:
-                reasons.append(f"✗ RSI neutral at {market_data.rsi:.1f} (≥35)")
-            total_indicators += 1
+        if has_ultimate_data:
+            # 🚀 ENHANCED MULTI-TIMEFRAME ANALYSIS
+            reasons.append("🔍 Using multi-timeframe Ultimate Analyzer data:")
             
-            # MACD bullish check
-            if market_data.macd > market_data.macd_signal:
-                indicators_aligned += 1
-                reasons.append(f"✓ MACD bullish ({market_data.macd:.4f} > {market_data.macd_signal:.4f})")
-            else:
-                reasons.append(f"✗ MACD bearish ({market_data.macd:.4f} ≤ {market_data.macd_signal:.4f})")
-            total_indicators += 1
+            # Extract timeframe data
+            h1_data = market_data.timeframe_data.get('1h', {}).get('indicators', {})
+            h4_data = market_data.timeframe_data.get('4h', {}).get('indicators', {})
+            d1_data = market_data.timeframe_data.get('1d', {}).get('indicators', {})
             
-            # Bollinger Bands lower check
-            bb_pos = market_data.get_bb_position()
-            if bb_pos < 0.25:
-                indicators_aligned += 1
-                reasons.append(f"✓ BB lower bounce at {bb_pos:.2f} (<0.25)")
-            else:
-                reasons.append(f"✗ BB position at {bb_pos:.2f} (≥0.25)")
-            total_indicators += 1
+            # Multi-timeframe RSI analysis
+            rsi_1h = h1_data.get('rsi', market_data.rsi)
+            rsi_4h = h4_data.get('rsi', market_data.rsi)
+            rsi_1d = d1_data.get('rsi', market_data.rsi)
             
-            # Stochastic oversold check
-            if market_data.stoch < 25:
-                indicators_aligned += 1
-                reasons.append(f"✓ Stoch oversold at {market_data.stoch:.1f} (<25)")
-            else:
-                reasons.append(f"✗ Stoch neutral at {market_data.stoch:.1f} (≥25)")
-            total_indicators += 1
+            reasons.append(f"Multi-TF RSI: 1H:{rsi_1h:.1f} | 4H:{rsi_4h:.1f} | 1D:{rsi_1d:.1f}")
             
-        else:  # SELL
-            # RSI overbought check  
-            if market_data.rsi > 65:
-                indicators_aligned += 1
-                reasons.append(f"✓ RSI overbought at {market_data.rsi:.1f} (>65)")
-            else:
-                reasons.append(f"✗ RSI neutral at {market_data.rsi:.1f} (≤65)")
-            total_indicators += 1
+            if signal.action == "BUY":
+                # Multi-timeframe RSI oversold confluence
+                oversold_timeframes = sum([
+                    rsi_1h < 35 if rsi_1h else False,
+                    rsi_4h < 35 if rsi_4h else False,
+                    rsi_1d < 35 if rsi_1d else False
+                ])
+                
+                if oversold_timeframes >= 2:
+                    indicators_aligned += 2  # Extra weight for multi-TF confluence
+                    reasons.append(f"✅ Strong multi-TF RSI oversold ({oversold_timeframes}/3 timeframes)")
+                elif oversold_timeframes >= 1:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ Partial multi-TF RSI oversold ({oversold_timeframes}/3 timeframes)")
+                else:
+                    reasons.append(f"✗ No RSI oversold signals ({oversold_timeframes}/3 timeframes)")
+                total_indicators += 2
+                
+                # Multi-timeframe MACD analysis
+                macd_1h = h1_data.get('macd', market_data.macd)
+                macd_signal_1h = h1_data.get('macd_signal', market_data.macd_signal)
+                macd_4h = h4_data.get('macd', 0)
+                macd_signal_4h = h4_data.get('macd_signal', 0)
+                
+                bullish_macd_count = sum([
+                    macd_1h > macd_signal_1h if macd_1h and macd_signal_1h else False,
+                    macd_4h > macd_signal_4h if macd_4h and macd_signal_4h else False
+                ])
+                
+                if bullish_macd_count >= 1:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ MACD bullish on {bullish_macd_count} timeframes")
+                else:
+                    reasons.append(f"✗ No bullish MACD signals")
+                total_indicators += 1
+                
+                # Multi-timeframe Bollinger Band position
+                bb_positions = []
+                for tf, data in [('1H', h1_data), ('4H', h4_data)]:
+                    bb_upper = data.get('bb_upper')
+                    bb_lower = data.get('bb_lower')
+                    if bb_upper and bb_lower and bb_upper != bb_lower:
+                        pos = (market_data.current_price - bb_lower) / (bb_upper - bb_lower)
+                        bb_positions.append((tf, pos))
+                
+                oversold_bb_count = sum([1 for tf, pos in bb_positions if pos < 0.25])
+                
+                if oversold_bb_count >= 1:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ BB lower bounce on {oversold_bb_count} timeframes")
+                else:
+                    reasons.append(f"✗ No BB oversold positions")
+                total_indicators += 1
+                
+            else:  # SELL
+                # Multi-timeframe RSI overbought confluence
+                overbought_timeframes = sum([
+                    rsi_1h > 65 if rsi_1h else False,
+                    rsi_4h > 65 if rsi_4h else False,
+                    rsi_1d > 65 if rsi_1d else False
+                ])
+                
+                if overbought_timeframes >= 2:
+                    indicators_aligned += 2  # Extra weight for multi-TF confluence
+                    reasons.append(f"✅ Strong multi-TF RSI overbought ({overbought_timeframes}/3 timeframes)")
+                elif overbought_timeframes >= 1:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ Partial multi-TF RSI overbought ({overbought_timeframes}/3 timeframes)")
+                else:
+                    reasons.append(f"✗ No RSI overbought signals ({overbought_timeframes}/3 timeframes)")
+                total_indicators += 2
+                
+                # Multi-timeframe MACD bearish
+                macd_1h = h1_data.get('macd', market_data.macd)
+                macd_signal_1h = h1_data.get('macd_signal', market_data.macd_signal)
+                macd_4h = h4_data.get('macd', 0)
+                macd_signal_4h = h4_data.get('macd_signal', 0)
+                
+                bearish_macd_count = sum([
+                    macd_1h < macd_signal_1h if macd_1h and macd_signal_1h else False,
+                    macd_4h < macd_signal_4h if macd_4h and macd_signal_4h else False
+                ])
+                
+                if bearish_macd_count >= 1:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ MACD bearish on {bearish_macd_count} timeframes")
+                else:
+                    reasons.append(f"✗ No bearish MACD signals")
+                total_indicators += 1
+                
+                # Multi-timeframe Bollinger Band upper rejection
+                bb_positions = []
+                for tf, data in [('1H', h1_data), ('4H', h4_data)]:
+                    bb_upper = data.get('bb_upper')
+                    bb_lower = data.get('bb_lower')
+                    if bb_upper and bb_lower and bb_upper != bb_lower:
+                        pos = (market_data.current_price - bb_lower) / (bb_upper - bb_lower)
+                        bb_positions.append((tf, pos))
+                
+                overbought_bb_count = sum([1 for tf, pos in bb_positions if pos > 0.75])
+                
+                if overbought_bb_count >= 1:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ BB upper rejection on {overbought_bb_count} timeframes")
+                else:
+                    reasons.append(f"✗ No BB overbought positions")
+                total_indicators += 1
+                
+        else:
+            # 📊 FALLBACK TO BASIC SINGLE-TIMEFRAME ANALYSIS
+            reasons.append("📊 Using basic single-timeframe analysis (no Ultimate data):")
+            reasons.append(f"RSI: {market_data.rsi:.1f} | MACD: {market_data.macd:.4f}")
+            reasons.append(f"Stoch: {market_data.stoch:.1f} | BB Position: {market_data.get_bb_position():.2f}")
             
-            # MACD bearish check
-            if market_data.macd < market_data.macd_signal:
-                indicators_aligned += 1
-                reasons.append(f"✓ MACD bearish ({market_data.macd:.4f} < {market_data.macd_signal:.4f})")
-            else:
-                reasons.append(f"✗ MACD bullish ({market_data.macd:.4f} ≥ {market_data.macd_signal:.4f})")
-            total_indicators += 1
-            
-            # Bollinger Bands upper check
-            bb_pos = market_data.get_bb_position()
-            if bb_pos > 0.75:
-                indicators_aligned += 1
-                reasons.append(f"✓ BB upper rejection at {bb_pos:.2f} (>0.75)")
-            else:
-                reasons.append(f"✗ BB position at {bb_pos:.2f} (≤0.75)")
-            total_indicators += 1
-            
-            # Stochastic overbought check
-            if market_data.stoch > 75:
-                indicators_aligned += 1
-                reasons.append(f"✓ Stoch overbought at {market_data.stoch:.1f} (>75)")
-            else:
-                reasons.append(f"✗ Stoch neutral at {market_data.stoch:.1f} (≤75)")
-            total_indicators += 1
+            if signal.action == "BUY":
+                # Basic RSI oversold check
+                if market_data.rsi < 35:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ RSI oversold at {market_data.rsi:.1f} (<35)")
+                else:
+                    reasons.append(f"✗ RSI neutral at {market_data.rsi:.1f} (≥35)")
+                total_indicators += 1
+                
+                # Basic MACD bullish check
+                if market_data.macd > market_data.macd_signal:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ MACD bullish ({market_data.macd:.4f} > {market_data.macd_signal:.4f})")
+                else:
+                    reasons.append(f"✗ MACD bearish ({market_data.macd:.4f} ≤ {market_data.macd_signal:.4f})")
+                total_indicators += 1
+                
+                # Basic Bollinger Bands lower check
+                bb_pos = market_data.get_bb_position()
+                if bb_pos < 0.25:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ BB lower bounce at {bb_pos:.2f} (<0.25)")
+                else:
+                    reasons.append(f"✗ BB position at {bb_pos:.2f} (≥0.25)")
+                total_indicators += 1
+                
+                # Basic Stochastic oversold check
+                if market_data.stoch < 25:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ Stoch oversold at {market_data.stoch:.1f} (<25)")
+                else:
+                    reasons.append(f"✗ Stoch neutral at {market_data.stoch:.1f} (≥25)")
+                total_indicators += 1
+                
+            else:  # SELL
+                # Basic RSI overbought check
+                if market_data.rsi > 65:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ RSI overbought at {market_data.rsi:.1f} (>65)")
+                else:
+                    reasons.append(f"✗ RSI neutral at {market_data.rsi:.1f} (≤65)")
+                total_indicators += 1
+                
+                # Basic MACD bearish check
+                if market_data.macd < market_data.macd_signal:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ MACD bearish ({market_data.macd:.4f} < {market_data.macd_signal:.4f})")
+                else:
+                    reasons.append(f"✗ MACD bullish ({market_data.macd:.4f} ≥ {market_data.macd_signal:.4f})")
+                total_indicators += 1
+                
+                # Basic Bollinger Bands upper check
+                bb_pos = market_data.get_bb_position()
+                if bb_pos > 0.75:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ BB upper rejection at {bb_pos:.2f} (>0.75)")
+                else:
+                    reasons.append(f"✗ BB position at {bb_pos:.2f} (≤0.75)")
+                total_indicators += 1
+                
+                # Basic Stochastic overbought check
+                if market_data.stoch > 75:
+                    indicators_aligned += 1
+                    reasons.append(f"✓ Stoch overbought at {market_data.stoch:.1f} (>75)")
+                else:
+                    reasons.append(f"✗ Stoch neutral at {market_data.stoch:.1f} (≤75)")
+                total_indicators += 1
         
-        confluence_score = indicators_aligned / total_indicators
+        # Calculate final confluence score
+        confluence_score = indicators_aligned / total_indicators if total_indicators > 0 else 0
         reasons.append(f"Confluence: {indicators_aligned}/{total_indicators} indicators aligned")
         
         return confluence_score, reasons
     
     def _check_timeframe_alignment(self, signal: TradingSignal,
                                  market_data: MarketData) -> Tuple[float, List[str]]:
-        """Check if multiple timeframes agree with the signal"""
+        """Enhanced multi-timeframe alignment check using Ultimate Analyzer data"""
         
         reasons = []
         
-        if not market_data.timeframe_data:
-            # Fallback: Use moving average alignment on current timeframe
-            reasons.append("Using MA alignment (no multi-timeframe data)")
+        # Check if we have Ultimate Analyzer multi-timeframe data
+        has_ultimate_data = (hasattr(market_data, 'timeframe_data') and 
+                            market_data.timeframe_data and 
+                            isinstance(market_data.timeframe_data, dict))
+        
+        if has_ultimate_data:
+            # 🚀 ENHANCED MULTI-TIMEFRAME ALIGNMENT ANALYSIS
+            reasons.append("🔍 Enhanced multi-timeframe alignment analysis:")
+            
+            timeframes = ['1h', '4h', '1d']
+            aligned_timeframes = 0
+            weighted_score = 0
+            
+            # Timeframe weights (higher timeframes more important)
+            tf_weights = {'1h': 1.0, '4h': 1.5, '1d': 2.0}
+            total_weight = sum(tf_weights.values())
+            
+            for tf in timeframes:
+                tf_indicators = market_data.timeframe_data.get(tf, {}).get('indicators', {})
+                
+                if tf_indicators:
+                    weight = tf_weights[tf]
+                    tf_score = 0
+                    factors_checked = 0
+                    
+                    # Check RSI alignment
+                    rsi = tf_indicators.get('rsi')
+                    if rsi is not None:
+                        factors_checked += 1
+                        if signal.action == "BUY":
+                            if rsi < 40:  # Oversold
+                                tf_score += 1
+                                reasons.append(f"✓ {tf.upper()} RSI oversold: {rsi:.1f}")
+                            elif rsi < 50:  # Neutral-bearish
+                                tf_score += 0.5
+                                reasons.append(f"~ {tf.upper()} RSI neutral-low: {rsi:.1f}")
+                            else:
+                                reasons.append(f"✗ {tf.upper()} RSI high: {rsi:.1f}")
+                        else:  # SELL
+                            if rsi > 60:  # Overbought
+                                tf_score += 1
+                                reasons.append(f"✓ {tf.upper()} RSI overbought: {rsi:.1f}")
+                            elif rsi > 50:  # Neutral-bullish
+                                tf_score += 0.5
+                                reasons.append(f"~ {tf.upper()} RSI neutral-high: {rsi:.1f}")
+                            else:
+                                reasons.append(f"✗ {tf.upper()} RSI low: {rsi:.1f}")
+                    
+                    # Check MACD alignment
+                    macd = tf_indicators.get('macd')
+                    macd_signal = tf_indicators.get('macd_signal')
+                    if macd is not None and macd_signal is not None:
+                        factors_checked += 1
+                        macd_diff = macd - macd_signal
+                        
+                        if signal.action == "BUY":
+                            if macd_diff > 0:  # Bullish MACD
+                                tf_score += 1
+                                reasons.append(f"✓ {tf.upper()} MACD bullish: {macd_diff:.4f}")
+                            elif macd_diff > -0.001:  # Near bullish
+                                tf_score += 0.3
+                                reasons.append(f"~ {tf.upper()} MACD neutral: {macd_diff:.4f}")
+                            else:
+                                reasons.append(f"✗ {tf.upper()} MACD bearish: {macd_diff:.4f}")
+                        else:  # SELL
+                            if macd_diff < 0:  # Bearish MACD
+                                tf_score += 1
+                                reasons.append(f"✓ {tf.upper()} MACD bearish: {macd_diff:.4f}")
+                            elif macd_diff < 0.001:  # Near bearish
+                                tf_score += 0.3
+                                reasons.append(f"~ {tf.upper()} MACD neutral: {macd_diff:.4f}")
+                            else:
+                                reasons.append(f"✗ {tf.upper()} MACD bullish: {macd_diff:.4f}")
+                    
+                    # Check EMA trend alignment
+                    ema = tf_indicators.get('ema')
+                    sma_long = tf_indicators.get('sma_long', tf_indicators.get('sma_50'))
+                    if ema and sma_long:
+                        factors_checked += 1
+                        ema_vs_sma = ema / sma_long - 1
+                        
+                        if signal.action == "BUY":
+                            if ema_vs_sma > 0.01:  # EMA significantly above SMA
+                                tf_score += 1
+                                reasons.append(f"✓ {tf.upper()} EMA above SMA: {ema_vs_sma:.3%}")
+                            elif ema_vs_sma > -0.01:  # Near alignment
+                                tf_score += 0.5
+                                reasons.append(f"~ {tf.upper()} EMA near SMA: {ema_vs_sma:.3%}")
+                            else:
+                                reasons.append(f"✗ {tf.upper()} EMA below SMA: {ema_vs_sma:.3%}")
+                        else:  # SELL
+                            if ema_vs_sma < -0.01:  # EMA significantly below SMA
+                                tf_score += 1
+                                reasons.append(f"✓ {tf.upper()} EMA below SMA: {ema_vs_sma:.3%}")
+                            elif ema_vs_sma < 0.01:  # Near alignment
+                                tf_score += 0.5
+                                reasons.append(f"~ {tf.upper()} EMA near SMA: {ema_vs_sma:.3%}")
+                            else:
+                                reasons.append(f"✗ {tf.upper()} EMA above SMA: {ema_vs_sma:.3%}")
+                    
+                    # Calculate timeframe score
+                    if factors_checked > 0:
+                        tf_final_score = tf_score / factors_checked
+                        weighted_score += tf_final_score * weight
+                        
+                        if tf_final_score >= 0.7:
+                            aligned_timeframes += 1
+                            reasons.append(f"✅ {tf.upper()} strongly aligned: {tf_final_score:.1%}")
+                        elif tf_final_score >= 0.5:
+                            reasons.append(f"~ {tf.upper()} partially aligned: {tf_final_score:.1%}")
+                        else:
+                            reasons.append(f"❌ {tf.upper()} not aligned: {tf_final_score:.1%}")
+                else:
+                    reasons.append(f"❓ {tf.upper()}: No indicator data available")
+            
+            alignment_score = weighted_score / total_weight if total_weight > 0 else 0
+            reasons.append(f"📊 Multi-TF alignment: {aligned_timeframes}/{len(timeframes)} timeframes, score: {alignment_score:.1%}")
+            
+        else:
+            # 📊 FALLBACK TO BASIC MOVING AVERAGE ALIGNMENT
+            reasons.append("📊 Using basic MA alignment (no Ultimate Analyzer data)")
             reasons.append(f"EMA9: {market_data.ema_9:.6f} | EMA21: {market_data.ema_21:.6f}")
             reasons.append(f"SMA50: {market_data.sma_50:.6f} | SMA200: {market_data.sma_200:.6f}")
             
             if signal.action == "BUY":
                 aligned = market_data.get_ma_alignment_bullish()
                 if aligned:
+                    alignment_score = 0.8
                     reasons.append("✓ Bullish MA alignment: EMA9>EMA21>SMA50>SMA200")
                 else:
+                    alignment_score = 0.3
                     reasons.append("✗ No bullish MA alignment")
             else:
                 aligned = market_data.get_ma_alignment_bearish()
                 if aligned:
+                    alignment_score = 0.8
                     reasons.append("✓ Bearish MA alignment: EMA9<EMA21<SMA50<SMA200")
                 else:
+                    alignment_score = 0.3
                     reasons.append("✗ No bearish MA alignment")
-            
-            return (0.8 if aligned else 0.3), reasons
-        
-        # Full multi-timeframe analysis
-        timeframes = ['1h', '4h', '1d']
-        aligned_timeframes = 0
-        
-        for tf in timeframes:
-            if tf in market_data.timeframe_data:
-                tf_data = market_data.timeframe_data[tf]
-                tf_rsi = tf_data.get('rsi', 50)
-                
-                if signal.action == "BUY":
-                    # Look for oversold conditions
-                    if tf_rsi < 45:  # More lenient for multi-timeframe
-                        aligned_timeframes += 1
-                        reasons.append(f"✓ {tf}: RSI {tf_rsi:.1f} oversold (<45)")
-                    else:
-                        reasons.append(f"✗ {tf}: RSI {tf_rsi:.1f} neutral (≥45)")
-                else:  # SELL
-                    if tf_rsi > 55:  # More lenient for multi-timeframe
-                        aligned_timeframes += 1
-                        reasons.append(f"✓ {tf}: RSI {tf_rsi:.1f} overbought (>55)")
-                    else:
-                        reasons.append(f"✗ {tf}: RSI {tf_rsi:.1f} neutral (≤55)")
-            else:
-                reasons.append(f"✗ {tf}: No data available")
-        
-        alignment_score = aligned_timeframes / len(timeframes)
-        reasons.append(f"Alignment: {aligned_timeframes}/{len(timeframes)} timeframes")
         
         return alignment_score, reasons
     
