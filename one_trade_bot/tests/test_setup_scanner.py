@@ -240,6 +240,64 @@ class TestSetupScanner(unittest.TestCase):
             self.assertIsNotNone(result)
         except Exception as e:
             self.fail(f"_add_indicators caused error: {e}")
+    
+    def test_volume_confirmation_algorithm(self):
+        """Test that volume confirmation algorithm works correctly"""
+        import pandas as pd
+        import numpy as np
+        
+        # Create controlled test data with known volume patterns
+        bars = 100
+        dates = pd.date_range(start='2024-01-01', periods=bars, freq='1h')
+        prices = np.linspace(50000, 51000, bars)  # Simple uptrend
+        
+        # Test case 1: Low volume (should fail)
+        low_volumes = [800000] * 99 + [1000000]  # 1.25x ratio < 1.5x required
+        df_low = pd.DataFrame({
+            'timestamp': dates,
+            'open': prices * 0.999,
+            'high': prices * 1.001,
+            'low': prices * 0.998,
+            'close': prices,
+            'volume': low_volumes
+        })
+        df_low['volume_sma'] = df_low['volume'].rolling(20).mean()
+        
+        result_low = self.setup_scanner._analyze_volume_confirmation(df_low)
+        self.assertFalse(result_low['has_volume_confirmation'])
+        self.assertLess(result_low['volume_ratio'], 1.5)
+        
+        # Test case 2: High volume (should pass) 
+        high_volumes = [800000] * 99 + [1500000]  # 1.8x ratio > 1.5x required
+        df_high = pd.DataFrame({
+            'timestamp': dates,
+            'open': prices * 0.999,
+            'high': prices * 1.001,
+            'low': prices * 0.998,
+            'close': prices,
+            'volume': high_volumes
+        })
+        df_high['volume_sma'] = df_high['volume'].rolling(20).mean()
+        
+        result_high = self.setup_scanner._analyze_volume_confirmation(df_high)
+        self.assertTrue(result_high['has_volume_confirmation'])
+        self.assertGreaterEqual(result_high['volume_ratio'], 1.5)
+        
+        # Test case 3: Edge case (just below threshold should fail)
+        edge_volumes = [800000] * 99 + [1199000]  # 1.49x ratio < 1.5x required
+        df_edge = pd.DataFrame({
+            'timestamp': dates,
+            'open': prices * 0.999,
+            'high': prices * 1.001,
+            'low': prices * 0.998,
+            'close': prices,
+            'volume': edge_volumes
+        })
+        df_edge['volume_sma'] = df_edge['volume'].rolling(20).mean()
+        
+        result_edge = self.setup_scanner._analyze_volume_confirmation(df_edge)
+        self.assertFalse(result_edge['has_volume_confirmation'])
+        self.assertLess(result_edge['volume_ratio'], 1.5)
 
 if __name__ == '__main__':
     unittest.main()

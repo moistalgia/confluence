@@ -3,10 +3,10 @@
 
 # EXCHANGE SETTINGS
 exchange:
-  name: "kraken"  # kraken, binance, coinbase
-  sandbox: true   # Use sandbox/testnet for testing
-  api_key: ""     # Your API key
-  secret: ""      # Your API secret
+  name: "kraken"   # kraken, binance, coinbase (using kraken for live data)
+  sandbox: false   # Use live Kraken data (no sandbox available)
+  api_key: ""      # Your API key (not needed for market data)
+  secret: ""       # Your API secret (not needed for market data)
   
 # TRADING PARAMETERS  
 trading:
@@ -55,11 +55,14 @@ filters:
     min_liquidity_ratio: 0.0005 # Max 0.05% of daily volume
     news_avoidance_hours: 4     # Avoid trades 4h before events
 
-# EXECUTION SETTINGS
+# EXECUTION SETTINGS - HYBRID APPROACH
 execution:
-  entry_timeout_hours: 4      # Cancel entry order after 4 hours
+  entry_timeout_hours: 6      # Daily target expires after 6 hours
+  monitor_interval: 5         # Check entry conditions every 5 minutes
   order_type: "limit"         # Always use limit orders
   slippage_tolerance: 0.001   # 0.1% slippage tolerance
+  entry_zone_tolerance: 0.005 # 0.5% tolerance around ideal entry
+  order_fill_timeout: 30      # Cancel unfilled orders after 30 minutes
 
 # TIMING
 schedule:
@@ -77,3 +80,22 @@ logging:
 database:
   path: "trades.db"
   backup_days: 90             # Keep 90 days of history
+
+# PAPER TRADING SETTINGS - ALIGNED WITH CORE PRINCIPLES
+paper_trading:
+  initial_balance: 10000      # Starting virtual balance ($)
+  position_size_pct: 0.01     # 1% risk per trade (MATCHES MAIN CONFIG)
+  trading_fees: 0.001         # 0.1% trading fees
+  slippage: 0.0005           # 0.05% slippage simulation
+  max_positions: 1            # ONE POSITION RULE (CORE PRINCIPLE)
+  check_interval: 1440        # Check once per day (1440 minutes = 24 hours)
+  risk_per_trade: 0.01       # 1% account risk per trade (DISCIPLINE)
+  stop_loss_pct: 0.02        # 2% stop loss
+  take_profit_pct: 0.04      # 4% take profit (2:1 R:R)
+  close_on_exit: false       # Keep positions open on session end
+  
+  # Enhanced features
+  use_live_market_data: true  # Use CCXT for real market data (Kraken live data!)
+  use_bid_ask_simulation: true # Simulate bid/ask spreads for realistic fills
+  order_timeout_hours: 4      # Cancel orders after X hours
+  database_path: "paper_trading.db"  # SQLite database for trade journaling
