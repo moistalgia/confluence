@@ -33,6 +33,7 @@ import json
 from core.paper_trading import PaperTradingEngine, PaperOrder, PaperPosition, PaperTrade, OrderType, OrderStatus, TradeDirection
 from core.multi_pair_kraken_scanner import MultiPairKrakenScanner
 from core.transparency_dashboard import ScanningTransparencyDashboard
+from core.intelligent_exit_manager import IntelligentExitManager, ExitSignal
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +103,9 @@ class DisciplinedTradingEngine(PaperTradingEngine):
         
         # Transparency dashboard for scan logging
         self.transparency = ScanningTransparencyDashboard(self.db_path)
+        
+        # Intelligent exit management system
+        self.exit_manager = IntelligentExitManager(config)
         
         # Dynamic target upgrading settings
         self.enable_dynamic_upgrading = config.get('execution', {}).get('enable_dynamic_upgrading', True)
@@ -674,19 +678,122 @@ class DisciplinedTradingEngine(PaperTradingEngine):
             logger.error(f"❌ Error executing trade: {e}")
     
     async def _monitor_existing_positions(self):
-        """Monitor existing positions for stops/targets"""
+        """
+        Enhanced Position Monitoring with Intelligent Exits
+        
+        Monitors positions using rule-based intelligent exit logic:
+        1. Basic trailing stops (always active)
+        2. Momentum reversal detection (if enabled)
+        3. Resistance rejection analysis (if enabled) 
+        4. Time decay management (if enabled)
+        """
         for symbol, position in self.positions.items():
             try:
                 # Get current market data
                 market_data = self.get_live_market_data(symbol)
-                if market_data:
-                    current_price = market_data['last']
+                if not market_data:
+                    continue
                     
-                    # Update position with current price
+                current_price = market_data['last']
+                
+                # Create position dict for exit manager
+                position_data = {
+                    'symbol': symbol,
+                    'entry_price': position.entry_price,
+                    'stop_loss': position.stop_loss,
+                    'take_profit': position.take_profit,
+                    'quantity': position.quantity,
+                    'entry_time': position.timestamp  # Assuming position has timestamp
+                }
+                
+                # Check intelligent exit conditions
+                exit_signal = self.exit_manager.check_exit_conditions(position_data, current_price)
+                
+                if exit_signal.should_exit:
+                    # Log the intelligent exit decision
+                    logger.info(f"\n🧠 INTELLIGENT EXIT TRIGGERED")
+                    logger.info(f"   Symbol: {symbol}")
+                    logger.info(f"   Type: {exit_signal.exit_type}")
+                    logger.info(f"   Reason: {exit_signal.reason}")
+                    logger.info(f"   Exit Price: ${exit_signal.exit_price:.4f}")
+                    logger.info(f"   Confidence: {exit_signal.confidence}")
+                    
+                    # Execute the exit via our existing order system
+                    if exit_signal.exit_type in ['STOP', 'TARGET']:
+                        # Use existing stop/target logic for these
+                        await self.update_positions(current_price, datetime.now())
+                    else:
+                        # Execute market exit for intelligent signals
+                        await self._execute_intelligent_exit(symbol, position, exit_signal, current_price)
+                else:
+                    # No exit triggered - just update position normally
                     await self.update_positions(current_price, datetime.now())
+                    
+                    # Periodically show position status (every 15 minutes)
+                    if self._should_show_position_status():
+                        status = self.exit_manager.get_position_status(position_data, current_price)
+                        self.exit_manager.print_position_status(status)
                     
             except Exception as e:
                 logger.error(f"Error monitoring position {symbol}: {e}")
+    
+    async def _execute_intelligent_exit(self, symbol: str, position: PaperPosition, 
+                                       exit_signal: ExitSignal, current_price: float):
+        """
+        Execute an intelligent exit order
+        
+        Logs the exit reason and executes market order to close position
+        """
+        try:
+            # Create market sell order to close position
+            exit_order = PaperOrder(
+                symbol=symbol,
+                order_type=OrderType.MARKET,
+                direction=TradeDirection.SELL,  # Always sell to close long
+                quantity=position.quantity,
+                price=current_price,  # Market order uses current price
+                timestamp=datetime.now(),
+                timeout_hours=1
+            )
+            
+            # Execute the exit
+            await self.place_order(exit_order)
+            
+            # Log to transparency dashboard
+            self.transparency.log_exit_decision({
+                'symbol': symbol,
+                'exit_type': exit_signal.exit_type,
+                'exit_reason': exit_signal.reason,
+                'exit_price': exit_signal.exit_price,
+                'confidence': exit_signal.confidence,
+                'timestamp': datetime.now().isoformat(),
+                'signals': exit_signal.signals
+            })
+            
+            logger.info(f"✅ Intelligent exit executed for {symbol}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error executing intelligent exit for {symbol}: {e}")
+    
+    def _should_show_position_status(self) -> bool:
+        """
+        Check if it's time to show position status
+        
+        Show status every 15 minutes to avoid spam
+        """
+        current_time = datetime.now()
+        
+        # Show status every 15 minutes
+        if not hasattr(self, '_last_status_time'):
+            self._last_status_time = current_time
+            return True
+        
+        minutes_since_last = (current_time - self._last_status_time).total_seconds() / 60
+        if minutes_since_last >= 15:
+            self._last_status_time = current_time
+            return True
+        
+        return False
     
     def _handle_target_expiration(self):
         """

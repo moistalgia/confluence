@@ -338,6 +338,50 @@ class ScanningTransparencyDashboard:
         finally:
             conn.close()
     
+    def log_exit_decision(self, exit_data: Dict[str, Any]):
+        """Log intelligent exit decisions for analysis"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            
+            # Create exit_decisions table if it doesn't exist
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS exit_decisions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    exit_type TEXT NOT NULL,
+                    exit_reason TEXT,
+                    exit_price REAL,
+                    confidence TEXT,
+                    signals TEXT,
+                    timestamp TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Insert exit decision
+            conn.execute('''
+                INSERT INTO exit_decisions (
+                    symbol, exit_type, exit_reason, exit_price, 
+                    confidence, signals, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                exit_data['symbol'],
+                exit_data['exit_type'],
+                exit_data['exit_reason'],
+                exit_data['exit_price'],
+                exit_data['confidence'],
+                json.dumps(exit_data.get('signals', {})),
+                exit_data['timestamp']
+            ))
+            
+            conn.commit()
+            logger.info(f"📊 Exit decision logged: {exit_data['symbol']} - {exit_data['exit_type']}")
+            
+        except Exception as e:
+            logger.error(f"Error logging exit decision: {e}")
+        finally:
+            conn.close()
+    
     def get_recent_scans(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get list of recent scans with summary information"""
         conn = sqlite3.connect(self.db_path)

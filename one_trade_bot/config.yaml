@@ -104,3 +104,37 @@ paper_trading:
   use_bid_ask_simulation: true # Simulate bid/ask spreads for realistic fills
   order_timeout_hours: 4      # Cancel orders after X hours
   database_path: "paper_trading.db"  # SQLite database for trade journaling
+
+# INTELLIGENT EXIT SYSTEM - Rule-based profit protection
+# Philosophy: "Follow pre-defined, objective rules for both entry AND exit"
+intelligent_exits:
+  # Level 1: Basic Trailing Stops (RECOMMENDED - start with this)
+  trailing_stop:
+    enabled: true               # ENABLED - trailing stops active
+    breakeven_at: 0.01         # Move to breakeven at 1% profit
+    trail_50_at: 0.02          # Trail 50% of profit at 2% profit
+    trail_50_percent: 0.5      # Lock in 50% of gains
+    trail_70_at: 0.03          # Trail 70% of profit at 3% profit  
+    trail_70_percent: 0.7      # Lock in 70% of gains
+    
+  # Level 2: Momentum Reversal Detection (ADVANCED - requires technical analysis)
+  momentum_reversal:
+    enabled: false             # DISABLED - until technical indicators implemented
+    min_profit: 0.015          # Only trigger if > 1.5% profit
+    signals_required: 2        # Need 2 of 4 signals (RSI, MACD, Volume, Rejection)
+    check_timeframe: "15m"     # Check on 15-minute chart for faster signals
+    
+  # Level 3: Resistance Rejection Analysis (ADVANCED - requires price action)
+  resistance_rejection:
+    enabled: false             # DISABLED - until price action analysis implemented
+    min_profit: 0.02           # Only trigger if > 2% profit
+    rejection_threshold: 2.0   # Strength of rejection pattern required
+    lookback_bars: 50          # Look back 50 bars for resistance levels
+    
+  # Level 4: Time Decay Management (CONSERVATIVE)
+  time_decay:
+    enabled: false             # DISABLED - start conservative, enable after testing
+    max_hold_hours: 6          # Default 6-hour hold period (matches entry timeout)
+    trigger_at_percent: 0.75   # Check after 75% of time (4.5 hours)
+    min_progress: 0.7          # Exit if < 70% progress to target
+    min_profit: 0.01           # Only trigger if > 1% profit
