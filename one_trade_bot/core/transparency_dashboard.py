@@ -284,8 +284,31 @@ class ScanningTransparencyDashboard:
                 liquidity = "💧 LIQUID" if liquid else "🚫 ILLIQUID"
                 
                 report.append(f"{symbol:12} | Score: {score:3}/100 | {status} | {liquidity} | Vol: ${volume:,.0f}")
+                
+                # Get detailed filter breakdown for this pair
+                pair_id = conn.execute('''
+                    SELECT id FROM pair_analysis 
+                    WHERE scan_id = ? AND symbol = ?
+                ''', (scan_id, symbol)).fetchone()
+                
+                if pair_id:
+                    filter_details = conn.execute('''
+                        SELECT filter_name, filter_score, filter_passed
+                        FROM filter_breakdown 
+                        WHERE pair_analysis_id = ?
+                        ORDER BY filter_score DESC
+                    ''', (pair_id[0],)).fetchall()
+                    
+                    if filter_details:
+                        filter_line = "             └─ Filters: "
+                        filter_components = []
+                        for fname, fscore, fpassed in filter_details:
+                            status_icon = "✅" if fpassed else "❌"
+                            filter_components.append(f"{fname}:{fscore:2.0f}{status_icon}")
+                        report.append(filter_line + " | ".join(filter_components))
+                
                 if reason:
-                    report.append(f"             └─ Reason: {reason}")
+                    report.append(f"             └─ Rejection: {reason}")
             
             report.append("")
             

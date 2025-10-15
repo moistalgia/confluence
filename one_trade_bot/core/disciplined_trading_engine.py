@@ -336,7 +336,8 @@ class DisciplinedTradingEngine(PaperTradingEngine):
             # Log scan results for transparency
             scan_id = self.transparency.log_scan_results(scan_result)
             
-            if not scan_result or not scan_result.get('valid_setups'):
+            valid_setups = scan_result.get('valid_setups', [])
+            if not scan_result or not valid_setups:
                 logger.info("❌ No valid setups found")
                 logger.info("📅 TODAY IS A REST DAY")
                 logger.info("   No trade candidates meet all 5 filters")
@@ -608,19 +609,25 @@ class DisciplinedTradingEngine(PaperTradingEngine):
         try:
             logger.info(f"✅ EXECUTING THE ONE TRADE")
             
-            # Calculate position size with strict 1% risk
+            # Calculate position size - use % of account approach
             account_balance = self.current_balance
-            risk_amount = account_balance * self.config.get('trading', {}).get('max_risk_per_trade', 0.01)
+            position_pct = self.config.get('position_size_pct', 0.01)  # 1% of account as position
+            target_position_value = account_balance * position_pct
             
-            price_risk = abs(self.daily_target.entry_ideal - self.daily_target.stop_loss)
-            position_size = risk_amount / price_risk if price_risk > 0 else 0
-            
-            # Validate position size
-            max_position_value = account_balance * 0.10  # Max 10% of account
+            # Calculate shares needed for target position value
+            position_size = target_position_value / self.daily_target.entry_ideal
             position_value = position_size * self.daily_target.entry_ideal
             
+            # Calculate actual risk amount based on stop loss
+            price_risk = abs(self.daily_target.entry_ideal - self.daily_target.stop_loss)
+            risk_amount = position_size * price_risk
+            
+            # Validate against max position rule (10% of account)
+            max_position_value = account_balance * 0.10  # Max 10% of account
             if position_value > max_position_value:
                 position_size = max_position_value / self.daily_target.entry_ideal
+                position_value = max_position_value
+                risk_amount = position_size * price_risk
                 logger.info(f"   Position size limited by max position rule")
             
             # Place limit order using enhanced engine capabilities
@@ -638,11 +645,13 @@ class DisciplinedTradingEngine(PaperTradingEngine):
             logger.info(f"📋 THE ONE LIMIT ORDER PLACED")
             logger.info(f"   Order ID: {order_id}")
             logger.info(f"   Symbol: {self.daily_target.symbol}")
-            logger.info(f"   Size: {position_size:.6f}")
+            logger.info(f"   Size: {position_size:.6f} shares")
+            logger.info(f"   Position Value: ${position_value:.2f}")
             logger.info(f"   Entry: ${self.daily_target.entry_ideal:.4f}")
             logger.info(f"   Stop: ${self.daily_target.stop_loss:.4f}")
             logger.info(f"   Target: ${self.daily_target.take_profit:.4f}")
-            logger.info(f"   Risk: ${risk_amount:.2f} (1% of account)")
+            logger.info(f"   Risk Amount: ${risk_amount:.2f} ({risk_amount/account_balance*100:.2f}% of account)")
+            logger.info(f"   Price Risk: ${price_risk:.4f} per share")
             logger.info(f"   R:R: {self.daily_target.risk_reward:.2f}:1")
             logger.info(f"")
             logger.info(f"🎯 DISCIPLINE ENFORCED: No more trades today")

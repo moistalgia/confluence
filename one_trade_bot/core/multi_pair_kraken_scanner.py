@@ -144,7 +144,7 @@ class MultiPairKrakenScanner:
             'scan_timestamp': scan_start,
             'pairs_analyzed': len(analysis_results),
             'liquid_pairs': len(liquid_pairs),
-            'valid_setups': len(valid_setups) > 0,
+            'valid_setups': valid_setups,  # Return the actual list instead of boolean
             'best_setup': self._format_setup_for_engine(best_setup) if best_setup else None,
             'rankings': rankings,
             'transparency_report': transparency_report,
