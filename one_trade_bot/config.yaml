@@ -63,6 +63,11 @@ execution:
   slippage_tolerance: 0.001   # 0.1% slippage tolerance
   entry_zone_tolerance: 0.005 # 0.5% tolerance around ideal entry
   order_fill_timeout: 30      # Cancel unfilled orders after 30 minutes
+  
+  # Dynamic Target Upgrading
+  enable_dynamic_upgrading: true  # Allow switching to better targets
+  rescan_interval_hours: 1        # Rescan for better targets every hour
+  upgrade_threshold_points: 10    # Switch if new target scores 10+ points higher
 
 # TIMING
 schedule:

@@ -31,6 +31,8 @@ import pandas as pd
 import json
 
 from core.paper_trading import PaperTradingEngine, PaperOrder, PaperPosition, PaperTrade, OrderType, OrderStatus, TradeDirection
+from core.multi_pair_kraken_scanner import MultiPairKrakenScanner
+from core.transparency_dashboard import ScanningTransparencyDashboard
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +99,15 @@ class DisciplinedTradingEngine(PaperTradingEngine):
         
         # Enhanced fill simulation
         self.use_bid_ask_simulation = config.get('use_bid_ask_simulation', True)
+        
+        # Transparency dashboard for scan logging
+        self.transparency = ScanningTransparencyDashboard(self.db_path)
+        
+        # Dynamic target upgrading settings
+        self.enable_dynamic_upgrading = config.get('execution', {}).get('enable_dynamic_upgrading', True)
+        self.rescan_interval_hours = config.get('execution', {}).get('rescan_interval_hours', 1)
+        self.upgrade_threshold_points = config.get('execution', {}).get('upgrade_threshold_points', 10)
+        self.last_rescan_time = None
         
         # Create discipline tracking tables
         self._setup_discipline_tables()
@@ -219,6 +230,21 @@ class DisciplinedTradingEngine(PaperTradingEngine):
             )
         ''')
         
+        # Target upgrades tracking table
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS target_upgrades (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                old_symbol TEXT NOT NULL,
+                new_symbol TEXT NOT NULL,
+                old_score INTEGER,
+                new_score INTEGER,
+                score_improvement INTEGER,
+                rescan_id INTEGER,
+                upgrade_time TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         
@@ -303,8 +329,12 @@ class DisciplinedTradingEngine(PaperTradingEngine):
             if self.workflow:
                 scan_result = await self.workflow.run_complete_scan()
             else:
-                # Fallback to simple scan if no workflow
-                scan_result = await self._simple_scan()
+                # Use multi-pair Kraken scanner
+                scanner = MultiPairKrakenScanner(self.config)
+                scan_result = await scanner.scan_all_liquid_pairs()
+            
+            # Log scan results for transparency
+            scan_id = self.transparency.log_scan_results(scan_result)
             
             if not scan_result or not scan_result.get('valid_setups'):
                 logger.info("❌ No valid setups found")
@@ -414,8 +444,108 @@ class DisciplinedTradingEngine(PaperTradingEngine):
                               f"${current_price:.4f} ({distance_pct:+.2f}% from entry, "
                               f"{hours_left:.1f}h left)")
                 
+                # Check for dynamic target upgrading opportunity
+                if self.enable_dynamic_upgrading:
+                    await self._check_for_target_upgrade()
+                
         except Exception as e:
             logger.error(f"Error monitoring entry: {e}")
+    
+    async def _check_for_target_upgrade(self):
+        """
+        Dynamic Target Upgrading - Smart Opportunity Switching
+        
+        Runs hourly rescans to find better opportunities:
+        - Re-run same multi-pair scanning logic
+        - Compare new best score vs current target score
+        - Switch if new target is significantly better (threshold)
+        - Log all upgrade decisions for transparency
+        """
+        current_time = datetime.now()
+        
+        # Check if it's time for a rescan
+        if (self.last_rescan_time is None or 
+            (current_time - self.last_rescan_time).total_seconds() >= self.rescan_interval_hours * 3600):
+            
+            logger.info(f"🔄 DYNAMIC UPGRADE CHECK - {current_time.strftime('%H:%M')}")
+            
+            try:
+                # Run fresh multi-pair scan
+                scanner = MultiPairKrakenScanner(self.config)
+                fresh_scan = await scanner.scan_all_liquid_pairs()
+                
+                # Log rescan for transparency
+                rescan_id = self.transparency.log_scan_results(fresh_scan)
+                
+                if fresh_scan['best_setup']:
+                    new_best = fresh_scan['best_setup']
+                    current_score = self.daily_target.confluence_score
+                    new_score = new_best['confluence_score']
+                    score_improvement = new_score - current_score
+                    
+                    logger.info(f"   Current target: {self.daily_target.symbol} (score: {current_score})")
+                    logger.info(f"   New best: {new_best['symbol']} (score: {new_score})")
+                    logger.info(f"   Score difference: {score_improvement:+d} points")
+                    
+                    # Check if upgrade is warranted
+                    if (new_best['symbol'] != self.daily_target.symbol and 
+                        score_improvement >= self.upgrade_threshold_points):
+                        
+                        logger.info(f"🚀 UPGRADING TARGET!")
+                        logger.info(f"   Switching from {self.daily_target.symbol} to {new_best['symbol']}")
+                        logger.info(f"   Improvement: {score_improvement} points (threshold: {self.upgrade_threshold_points})")
+                        
+                        # Create new daily target
+                        old_target = self.daily_target.symbol
+                        self._create_upgraded_target(new_best)
+                        
+                        # Log upgrade decision
+                        self._log_target_upgrade(old_target, new_best, score_improvement, rescan_id)
+                        
+                    else:
+                        logger.info(f"✋ Keeping current target (improvement: {score_improvement} < threshold: {self.upgrade_threshold_points})")
+                
+                self.last_rescan_time = current_time
+                
+            except Exception as e:
+                logger.error(f"Error in dynamic upgrade check: {e}")
+    
+    def _create_upgraded_target(self, new_setup: Dict[str, Any]):
+        """Create new daily target from upgraded setup"""
+        # Update current daily target with new information
+        self.daily_target.symbol = new_setup['symbol']
+        self.daily_target.entry_ideal = new_setup['entry_price']
+        self.daily_target.entry_low = new_setup['entry_price'] * (1 - self.entry_zone_tolerance)
+        self.daily_target.entry_high = new_setup['entry_price'] * (1 + self.entry_zone_tolerance)
+        self.daily_target.stop_loss = new_setup['stop_loss']
+        self.daily_target.take_profit = new_setup['take_profit']
+        self.daily_target.risk_reward = new_setup['risk_reward']
+        self.daily_target.confluence_score = new_setup['confluence_score']
+        self.daily_target.setup_type = new_setup.get('setup_type', 'pullback')
+        
+        # Note: Keep original selected_at and expires_at times for tracking
+    
+    def _log_target_upgrade(self, old_symbol: str, new_setup: Dict[str, Any], score_improvement: int, rescan_id: int):
+        """Log target upgrade decision to database"""
+        conn = sqlite3.connect(self.db_path)
+        
+        try:
+            conn.execute('''
+                INSERT INTO target_upgrades (
+                    old_symbol, new_symbol, old_score, new_score, 
+                    score_improvement, rescan_id, upgrade_time
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                old_symbol, new_setup['symbol'], 
+                self.daily_target.confluence_score - score_improvement,
+                new_setup['confluence_score'], score_improvement, 
+                rescan_id, datetime.now().isoformat()
+            ))
+            conn.commit()
+        except Exception as e:
+            logger.error(f"Error logging target upgrade: {e}")
+        finally:
+            conn.close()
     
     async def _confirm_entry_still_valid(self, market_data: Dict[str, float]) -> bool:
         """
